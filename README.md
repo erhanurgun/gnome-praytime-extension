@@ -6,8 +6,7 @@ GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 
 - Panel üzerinde sonraki namaz vakti ve geri sayım
 - 6 vakit desteği: İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı
-- Otomatik konum tespiti (GeoClue2)
-- Manuel konum girişi
+- Şehir arama ile konum seçimi (Diyanet API)
 - Vakit girişi ve öncesi bildirimleri
 - Türkçe arayüz
 - Clean Architecture mimari yapısı
@@ -15,61 +14,105 @@ GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 ## Gereksinimler
 
 - GNOME Shell 46, 47 veya 48
-- GeoClue2 (otomatik konum için)
 - İnternet bağlantısı (API erişimi için)
 
-## Kurulum
-
-### Yöntem 1: Manuel Kurulum
+## Hızlı Başlangıç
 
 ```bash
 # Projeyi klonla
 git clone https://github.com/erhanurgun/LINUX-ubuntu-gnome-praytime-extension.git
 cd LINUX-ubuntu-gnome-praytime-extension
 
-# Extension klasörüne kopyala
-mkdir -p ~/.local/share/gnome-shell/extensions/praytime@erho.dev
-cp -r * ~/.local/share/gnome-shell/extensions/praytime@erho.dev/
-
-# Schema derle
-glib-compile-schemas ~/.local/share/gnome-shell/extensions/praytime@erho.dev/schemas/
+# Kur ve çalıştır
+./scripts/install.sh
 ```
 
-### Yöntem 2: Zip ile Kurulum
+## Geliştirme
+
+### Scriptler
+
+Proje, geliştirme sürecini kolaylaştıran scriptler içerir:
+
+| Script                     | Açıklama                                       |
+|----------------------------|------------------------------------------------|
+| `./scripts/install.sh`     | Uzantıyı kurar ve etkinleştirir                |
+| `./scripts/uninstall.sh`   | Uzantıyı kaldırır                              |
+| `./scripts/dev.sh`         | Değişiklikleri senkronize eder ve reload yapar |
+| `./scripts/dev.sh --watch` | Otomatik senkronizasyon (dosya izleme)         |
+| `./scripts/clean.sh`       | Kalıntıları ve cache'i temizler                |
+| `./scripts/build.sh`       | extensions.gnome.org için zip oluşturur        |
+| `./scripts/logs.sh`        | GNOME Shell loglarını gösterir                 |
+
+### Geliştirme İş Akışı
 
 ```bash
-# Projeyi zip olarak indir ve çıkart
-unzip LINUX-ubuntu-gnome-praytime-extension.zip -d praytime
+# 1. Projeyi klonla
+git clone https://github.com/erhanurgun/LINUX-ubuntu-gnome-praytime-extension.git
+cd LINUX-ubuntu-gnome-praytime-extension
 
+# 2. İlk kurulum
+./scripts/install.sh
+
+# 3. Kod değişikliği yap, sonra:
+./scripts/dev.sh
+
+# 4. Veya otomatik senkronizasyon için:
+./scripts/dev.sh --watch
+
+# 5. Logları takip et (başka terminalde):
+./scripts/logs.sh
+```
+
+### Watch Modu İçin
+
+`--watch` modu için `inotify-tools` gereklidir:
+
+```bash
+sudo apt install inotify-tools
+```
+
+## Kurulum Yöntemleri
+
+### Yöntem 1: Script ile (Önerilen)
+
+```bash
+./scripts/install.sh
+```
+
+### Yöntem 2: Manuel Kurulum
+
+```bash
 # Extension klasörüne kopyala
 mkdir -p ~/.local/share/gnome-shell/extensions/praytime@erho.dev
-cp -r praytime/* ~/.local/share/gnome-shell/extensions/praytime@erho.dev/
+cp -r extension.js prefs.js metadata.json stylesheet.css schemas src icons \
+    ~/.local/share/gnome-shell/extensions/praytime@erho.dev/
 
 # Schema derle
 glib-compile-schemas ~/.local/share/gnome-shell/extensions/praytime@erho.dev/schemas/
+
+# Etkinleştir
+gnome-extensions enable praytime@erho.dev
 ```
 
-### Yöntem 3: GNOME Extensions Sitesi (Yakında)
+### Yöntem 3: GNOME Extensions Sitesi (Yakın Zamanda)
 
 Extension onaylandıktan sonra [extensions.gnome.org](https://extensions.gnome.org) üzerinden kurulabilecek.
 
 ## GNOME Shell'i Yeniden Başlatma
 
-### X11 Kullanıyorsanız
+### X11
 
 ```bash
 # Alt+F2 tuşuna basıp "r" yazın ve Enter'a basın
 ```
 
-### Wayland Kullanıyorsanız
+### Wayland
 
 ```bash
 # Oturumu kapatıp yeniden açın
 ```
 
-## Extension'ı Etkinleştirme
-
-### Terminal ile
+## Extension Yönetimi
 
 ```bash
 # Etkinleştir
@@ -78,30 +121,12 @@ gnome-extensions enable praytime@erho.dev
 # Devre dışı bırak
 gnome-extensions disable praytime@erho.dev
 
-# Durumunu kontrol et
+# Durumu göster
 gnome-extensions show praytime@erho.dev
+
+# Ayarları aç
+gnome-extensions prefs praytime@erho.dev
 ```
-
-### GNOME Extensions Uygulaması ile
-
-```bash
-# GNOME Extensions uygulamasını aç
-gnome-extensions-app
-```
-
-Uygulama açıldıktan sonra "Praytime" extension'ını bulup açma/kapama anahtarını kullanın.
-
-### GNOME Tweaks ile
-
-```bash
-# GNOME Tweaks yükle (yoksa)
-sudo apt install gnome-tweaks
-
-# GNOME Tweaks'i aç
-gnome-tweaks
-```
-
-"Uzantılar" (Extensions) sekmesinden "Praytime" extension'ını etkinleştirin.
 
 ## Kullanım
 
@@ -120,48 +145,40 @@ Extension etkinleştirildikten sonra GNOME Shell panelinde sonraki namaz vakti v
 ### Menü
 
 Panel butonuna tıklayarak:
-- Tüm vakitleri görebilirsiniz
+
+- Tüm vakitleri görebilirsiniz (05:52 - İmsak formatı)
 - Konum bilgisini görebilirsiniz
 - Ayarlara erişebilirsiniz
+- Sürüm ve geliştirici bilgisini görebilirsiniz
 
 ## Ayarlar
 
-Ayarlar penceresine erişmek için:
-
-```bash
-# Terminal ile
-gnome-extensions prefs praytime@erho.dev
-
-# Veya panel menüsünden "Ayarlar" butonuna tıklayın
-```
-
 ### Konum Ayarları
 
-- **Manuel Konum Kullan**: Otomatik konum yerine manuel koordinat kullan
-- **Şehir Adı**: Gösterilecek şehir adı
-- **Enlem/Boylam**: Manuel koordinatlar
+- **Şehir Arama**: Diyanet API ile şehir arama
+- **Konum ID**: Seçilen şehrin ID'si
 
 ### Bildirim Ayarları
 
 - **Bildirimleri Etkinleştir**: Bildirim gösterimini aç/kapat
-- **Önceden Bildir**: Vakit girmeden kaç dakika önce bildirim göster (1-30)
+- **Önceden Bildir**: Vakit girmeden kaç dakika önce bildirim göster
 - **Vakit Girince Bildir**: Vakit tam girdiğinde bildirim göster
 
-### Gösterim Ayarları
+### Görünüm Ayarları
 
 - **Geri Sayım Göster**: Panelde kalan süreyi göster
 - **Panel Konumu**: Extension'ın paneldeki konumu (Sol/Orta/Sağ)
 
 ## Hata Ayıklama
 
-### Log'ları Görüntüleme
+### Logları Görüntüleme
 
 ```bash
-# GNOME Shell log'larını görüntüle
-journalctl -f -o cat /usr/bin/gnome-shell | grep -i praytime
+# Script ile (önerilen)
+./scripts/logs.sh
 
-# Veya
-journalctl -f -o cat GNOME_SHELL_EXTENSION_UUID=praytime@erho.dev
+# Manuel
+journalctl --user -f -o cat | grep -i praytime
 ```
 
 ### Extension'ı Sıfırlama
@@ -175,6 +192,12 @@ gnome-extensions disable praytime@erho.dev
 gnome-extensions enable praytime@erho.dev
 ```
 
+### Temizlik
+
+```bash
+./scripts/clean.sh
+```
+
 ## Proje Yapısı
 
 ```
@@ -184,12 +207,20 @@ praytime@erho.dev/
 ├── prefs.js               # Ayarlar penceresi
 ├── stylesheet.css         # UI stilleri
 ├── schemas/               # GSettings şemaları
+├── icons/                 # Uzantı ikonları
+├── scripts/               # Geliştirme scriptleri
+│   ├── install.sh         # Kurulum
+│   ├── uninstall.sh       # Kaldırma
+│   ├── dev.sh             # Geliştirme
+│   ├── clean.sh           # Temizlik
+│   ├── build.sh           # Build
+│   └── logs.sh            # Log görüntüleme
 └── src/
+    ├── config/            # Sabitler ve yapılandırma
     ├── domain/            # İş mantığı modelleri
     │   └── models/
-    ├── infrastructure/    # Dış sistemler (API, GeoClue2)
-    │   ├── api/
-    │   └── location/
+    ├── infrastructure/    # Dış sistemler (API)
+    │   └── api/
     ├── application/       # Servis katmanı
     └── presentation/      # UI bileşenleri
 ```
@@ -210,9 +241,9 @@ Bu extension [prayertimes.api.abdus.dev](https://prayertimes.api.abdus.dev) API'
 
 MIT License
 
-## Yazar
+## Geliştirici
 
-Erhan Ürgün
+[@erhanurgun](https://github.com/erhanurgun) - [erho.me](https://erho.me)
 
 ## Sürüm Geçmişi
 

@@ -7,7 +7,7 @@ import { API_BASE_URL, PRAYER_NAMES } from '../../config/constants.js';
 export class PrayerTimesApiClient {
     constructor() {
         this._session = new Soup.Session({
-            user_agent: 'praytime@erho.dev/0.2.1',
+            user_agent: 'praytime@erho.dev/0.2.2',
             timeout: 30,
         });
         this._cancellable = null;

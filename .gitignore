@@ -1,5 +1,34 @@
+# IDE ve Editor
 /.claude
 /.vscode
 /.idea
+*.swp
+*.swo
+*~
 
+# Build ciktilari
+*.zip
+dist/
+
+# Derlenmis dosyalar
+schemas/gschemas.compiled
+
+# Python (varsa)
+__pycache__/
+*.pyc
+*.pyo
+
+# Sistem dosyalari
+.DS_Store
+Thumbs.db
+
+# Gecici dosyalar
+*.tmp
+*.bak
+*.log
+
+# Yerel ayarlar
+*.local
+
+# Claude Code
 CLAUDE.md

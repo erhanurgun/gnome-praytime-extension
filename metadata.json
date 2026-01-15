@@ -3,9 +3,11 @@
   "name": "Praytime",
   "description": "GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi",
   "shell-version": ["46", "47", "48"],
-  "version": 4,
-  "version-name": "0.2.1",
+  "version": 5,
+  "version-name": "0.2.2",
   "url": "https://github.com/erhanurgun/LINUX-ubuntu-gnome-praytime-extension",
+  "developer": "@erhanurgun - www.erho.dev",
+  "developer-url": "https://erho.me",
   "settings-schema": "org.gnome.shell.extensions.praytime",
   "gettext-domain": "praytime@erho.dev"
 }

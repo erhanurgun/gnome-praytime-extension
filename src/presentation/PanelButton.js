@@ -1,4 +1,5 @@
 import GObject from 'gi://GObject';
+import GLib from 'gi://GLib';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -57,7 +58,7 @@ class PanelButton extends PanelMenu.Button {
         // Vakit satırları - constants'tan al
         const prayerNames = getPrayerNamesList();
         for (const name of prayerNames) {
-            const item = new PopupMenu.PopupMenuItem(`${name}: --:--`, {
+            const item = new PopupMenu.PopupMenuItem(`--:-- - ${name}`, {
                 reactive: false,
             });
             this._prayerItems.push({ name, item });
@@ -73,6 +74,18 @@ class PanelButton extends PanelMenu.Button {
             this._extension.openPreferences();
         });
         this.menu.addMenuItem(settingsItem);
+
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+        // Sürüm ve geliştirici bilgisi
+        const versionItem = new PopupMenu.PopupMenuItem('v0.2.2 | @erhanurgun - www.erho.dev', {
+            style_class: 'praytime-version',
+        });
+        this._versionItem = versionItem;
+        this._versionHandlerId = versionItem.connect('activate', () => {
+            GLib.spawn_command_line_async('xdg-open https://erho.me');
+        });
+        this.menu.addMenuItem(versionItem);
     }
 
     // UI güncelle
@@ -114,7 +127,7 @@ class PanelButton extends PanelMenu.Button {
                 const prayer = schedule.getPrayerByName(name);
 
                 if (prayer) {
-                    item.label.set_text(`${name}: ${prayer.timeString}`);
+                    item.label.set_text(`${prayer.timeString} - ${name}`);
 
                     // Aktif vakti vurgula
                     if (currentPrayer && currentPrayer.name === name) {
@@ -153,6 +166,11 @@ class PanelButton extends PanelMenu.Button {
         if (this._settingsItem && this._settingsHandlerId) {
             this._settingsItem.disconnect(this._settingsHandlerId);
             this._settingsHandlerId = null;
+        }
+        // Version handler'ını temizle
+        if (this._versionItem && this._versionHandlerId) {
+            this._versionItem.disconnect(this._versionHandlerId);
+            this._versionHandlerId = null;
         }
         this._prayerItems = [];
         super.destroy();

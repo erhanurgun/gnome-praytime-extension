@@ -2,6 +2,17 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.2.2] - 2026-01-15
+
+### Değişti
+- Vakit gösterim formatı "05:52 - İmsak" şeklinde düzenlendi (saat önce)
+- Popup menüye sürüm ve geliştirici bilgisi eklendi
+- Geliştirici satırına tıklandığında https://erho.me adresi açılıyor
+
+### Teknik
+- metadata.json'a developer ve developer-url alanları eklendi
+- PanelButton.js'e GLib import'u ve version handler eklendi
+
 ## [0.2.1] - 2026-01-15
 
 ### Düzeltildi
