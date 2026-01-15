@@ -41,11 +41,42 @@
       <description>Vakit tam girdiğinde bildirim gösterilsin mi</description>
     </key>
 
+    <key name="notification-sound" type="b">
+      <default>true</default>
+      <summary>Bildirim sesi</summary>
+      <description>Bildirim geldiğinde ses çalsın mı</description>
+    </key>
+
     <!-- Gösterim Ayarları -->
+    <key name="display-mode" type="s">
+      <default>'text'</default>
+      <summary>Görünüm modu</summary>
+      <description>Panel görünüm türü: text (tam metin), icon (sadece ikon), compact (kompakt)</description>
+    </key>
+
+    <key name="show-prayer-name" type="b">
+      <default>true</default>
+      <summary>Vakit adını göster</summary>
+      <description>Panelde vakit adı gösterilsin mi (İkindi, Akşam vb.)</description>
+    </key>
+
+    <key name="show-prayer-time" type="b">
+      <default>true</default>
+      <summary>Vakit saatini göster</summary>
+      <description>Panelde vakit saati gösterilsin mi (14:52 vb.)</description>
+    </key>
+
     <key name="show-countdown" type="b">
       <default>true</default>
       <summary>Geri sayım göster</summary>
       <description>Sonraki vakte kalan süreyi göster</description>
+    </key>
+
+    <key name="countdown-threshold-minutes" type="i">
+      <default>60</default>
+      <summary>Geri sayım eşiği (dakika)</summary>
+      <description>Sonraki vakte bu kadar dakika veya daha az kaldığında geri sayım gösterilir</description>
+      <range min="5" max="180"/>
     </key>
 
     <key name="panel-position" type="s">

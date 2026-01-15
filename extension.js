@@ -11,7 +11,7 @@ export default class PraytimeExtension extends Extension {
         console.log('[Praytime] Extension etkinleştiriliyor...');
 
         this._settings = this.getSettings();
-        this._notificationManager = new NotificationManager();
+        this._notificationManager = new NotificationManager(this._settings);
 
         // Panel butonu oluştur
         this._panelButton = new PanelButton(this);
@@ -84,8 +84,42 @@ export default class PraytimeExtension extends Extension {
         }
     }
 
+    // Panel konumunu değiştir
+    _repositionPanel() {
+        const newPosition = this._settings.get_string('panel-position');
+
+        // Eski paneli kaldır
+        if (this._panelButton) {
+            this._panelButton.destroy();
+            this._panelButton = null;
+        }
+
+        // Yeni panel oluştur ve ekle
+        this._panelButton = new PanelButton(this);
+        Main.panel.addToStatusArea('praytime-indicator', this._panelButton, 0, newPosition);
+
+        // UI güncelle
+        if (this._service) {
+            this._panelButton.update(this._service);
+        }
+
+        console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
+    }
+
     // Ayar değişikliği
     async _onSettingsChanged(key) {
+        // Panel konumu değişikliği - anında uygula
+        if (key === 'panel-position') {
+            this._repositionPanel();
+            return;
+        }
+
+        // Görünüm ayarları değişikliği - UI güncelle
+        if (['display-mode', 'show-prayer-name', 'show-prayer-time', 'show-countdown', 'countdown-threshold-minutes'].includes(key)) {
+            this._onUpdate();
+            return;
+        }
+
         // Konum değiştiğinde servisi yeniden başlat
         if (['location-id', 'city-name', 'region-name'].includes(key)) {
             this._service.stop();

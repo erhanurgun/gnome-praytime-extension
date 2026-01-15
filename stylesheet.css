@@ -1,13 +1,165 @@
 /* Praytime Extension Stilleri */
 
+/* Panel */
 .praytime-panel-box {
-    spacing: 4px;
+    spacing: 6px;
+}
+
+.praytime-icon {
+    icon-size: 16px;
 }
 
 .praytime-label {
     font-weight: bold;
 }
 
+/* Menu Header */
+.praytime-menu-header {
+    padding: 12px 16px;
+}
+
+.praytime-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.praytime-subtitle {
+    font-size: 0.9em;
+    color: #999;
+    margin-bottom: 2px;
+}
+
+.praytime-date {
+    font-size: 0.85em;
+    color: #777;
+}
+
+/* Timeline */
+.praytime-timeline {
+    padding: 8px 0;
+}
+
+.praytime-timeline-item {
+    padding: 4px 16px;
+    spacing: 8px;
+}
+
+.praytime-timeline-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Timeline sol bolum - dot ve cizgi */
+.praytime-timeline-status {
+    width: 24px;
+}
+
+.praytime-timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555;
+    margin: 4px 7px;
+}
+
+.praytime-timeline-dot-passed {
+    background-color: #444;
+}
+
+.praytime-timeline-dot-current {
+    background-color: #E95420;
+    box-shadow: 0 0 6px rgba(233, 84, 32, 0.6);
+}
+
+.praytime-timeline-dot-next {
+    background-color: #E95420;
+    opacity: 0.6;
+    border: 2px solid #E95420;
+}
+
+.praytime-timeline-line {
+    width: 2px;
+    height: 16px;
+    background-color: #444;
+    margin-left: 11px;
+    margin-top: -2px;
+    margin-bottom: -2px;
+}
+
+.praytime-timeline-line-passed {
+    background-color: #333;
+}
+
+.praytime-timeline-line-last {
+    background-color: transparent;
+}
+
+/* Timeline orta bolum - isim */
+.praytime-timeline-name {
+    min-width: 55px;
+    font-size: 1em;
+}
+
+.praytime-timeline-name-passed {
+    color: #777;
+}
+
+.praytime-timeline-name-current {
+    font-weight: bold;
+    color: #E95420;
+}
+
+.praytime-timeline-name-next {
+    font-weight: 600;
+}
+
+/* Timeline sag bolum - saat ve badge */
+.praytime-timeline-time {
+    min-width: 45px;
+    text-align: right;
+    font-family: monospace;
+}
+
+.praytime-timeline-time-passed {
+    color: #666;
+}
+
+.praytime-timeline-time-current {
+    font-weight: bold;
+    color: #E95420;
+}
+
+.praytime-timeline-badge {
+    font-size: 0.75em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 50px;
+    text-align: center;
+}
+
+.praytime-timeline-badge-passed {
+    background-color: rgba(100, 100, 100, 0.3);
+    color: #888;
+}
+
+.praytime-timeline-badge-current {
+    background-color: #E95420;
+    color: white;
+    font-weight: bold;
+}
+
+.praytime-timeline-badge-next {
+    background-color: rgba(233, 84, 32, 0.2);
+    color: #E95420;
+    font-weight: 600;
+}
+
+/* Ayarlar butonu */
+.praytime-settings-item {
+    margin-top: 8px;
+}
+
+/* Eski uyumluluk */
 .praytime-header {
     font-weight: bold;
     font-size: 1.1em;
@@ -24,6 +176,6 @@
 }
 
 .praytime-next {
-    background-color: rgba(233, 84, 32, 0.2);
+    background-color: rgba(233, 84, 32, 0.15);
     border-radius: 4px;
 }

@@ -12,7 +12,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         this._settings = this.getSettings();
         this._session = new Soup.Session({
-            user_agent: 'praytime@erho.dev/0.1.1',
+            user_agent: 'praytime@erho.dev/0.2.0',
             timeout: 30,
         });
 
@@ -34,11 +34,19 @@ export default class PraytimePreferences extends ExtensionPreferences {
 
         // Gösterim Sayfası
         const displayPage = new Adw.PreferencesPage({
-            title: 'Gösterim',
+            title: 'Görünüm',
             icon_name: 'preferences-desktop-display-symbolic',
         });
         window.add(displayPage);
         this._buildDisplayPage(displayPage);
+
+        // Hakkında Sayfası
+        const aboutPage = new Adw.PreferencesPage({
+            title: 'Hakkında',
+            icon_name: 'help-about-symbolic',
+        });
+        window.add(aboutPage);
+        this._buildAboutPage(aboutPage);
 
         // Pencere kapatıldığında temizle
         window.connect('destroy', () => {
@@ -46,21 +54,23 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
     }
 
+    // Konum Sayfası
     _buildLocationPage(page) {
         // Mevcut konum grubu
         const currentGroup = new Adw.PreferencesGroup({
             title: 'Mevcut Konum',
+            description: 'Namaz vakitlerinin hesaplandığı konum',
         });
         page.add(currentGroup);
 
-        // Seçili konum gösterimi
         const cityName = this._settings.get_string('city-name');
         const regionName = this._settings.get_string('region-name');
         const locationId = this._settings.get_int('location-id');
 
         this._currentLocationRow = new Adw.ActionRow({
             title: cityName,
-            subtitle: regionName !== cityName ? `${regionName} (ID: ${locationId})` : `ID: ${locationId}`,
+            subtitle: regionName !== cityName ? `${regionName} - ID: ${locationId}` : `ID: ${locationId}`,
+            icon_name: 'mark-location-symbolic',
         });
         currentGroup.add(this._currentLocationRow);
 
@@ -71,15 +81,14 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         page.add(searchGroup);
 
-        // Arama kutusu
         const searchEntry = new Adw.EntryRow({
             title: 'Şehir/İlçe Adı',
         });
         searchGroup.add(searchEntry);
 
-        // Arama butonu
         const searchButton = new Gtk.Button({
             label: 'Ara',
+            css_classes: ['suggested-action'],
             margin_start: 12,
             margin_end: 12,
             margin_top: 6,
@@ -108,7 +117,6 @@ export default class PraytimePreferences extends ExtensionPreferences {
             }
         });
 
-        // Enter ile arama
         searchEntry.connect('entry-activated', () => {
             const query = searchEntry.text.trim();
             if (query.length >= 2) {
@@ -119,7 +127,6 @@ export default class PraytimePreferences extends ExtensionPreferences {
 
     // Şehir ara
     _searchCity(query) {
-        // Önceki sonuçları temizle
         this._clearResults();
 
         const url = `${API_BASE_URL}/api/diyanet/search?q=${encodeURIComponent(query)}`;
@@ -160,7 +167,6 @@ export default class PraytimePreferences extends ExtensionPreferences {
     _showResults(results) {
         this._resultsGroup.visible = true;
 
-        // En fazla 10 sonuç göster
         const displayResults = results.slice(0, 10);
 
         for (const result of displayResults) {
@@ -170,16 +176,14 @@ export default class PraytimePreferences extends ExtensionPreferences {
 
             const row = new Adw.ActionRow({
                 title: displayName,
-                subtitle: `${result.country} (ID: ${result.id})`,
+                subtitle: `${result.country} - ID: ${result.id}`,
                 activatable: true,
             });
 
-            // Seç ikonu
             row.add_suffix(new Gtk.Image({
                 icon_name: 'object-select-symbolic',
             }));
 
-            // Seçim işlevi
             row.connect('activated', () => {
                 this._selectLocation(result);
             });
@@ -194,13 +198,11 @@ export default class PraytimePreferences extends ExtensionPreferences {
         this._settings.set_string('city-name', location.city);
         this._settings.set_string('region-name', location.region || location.city);
 
-        // Mevcut konum gösterimini güncelle
         this._currentLocationRow.title = location.city;
         this._currentLocationRow.subtitle = location.region && location.region !== location.city
-            ? `${location.region} (ID: ${location.id})`
+            ? `${location.region} - ID: ${location.id}`
             : `ID: ${location.id}`;
 
-        // Sonuçları gizle
         this._resultsGroup.visible = false;
         this._clearResults();
     }
@@ -227,6 +229,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
         this._resultsGroup.add(errorRow);
     }
 
+    // Bildirimler Sayfası
     _buildNotificationPage(page) {
         const group = new Adw.PreferencesGroup({
             title: 'Bildirim Ayarları',
@@ -263,26 +266,102 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         group.add(onTimeRow);
         this._settings.bind('notify-on-time', onTimeRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+
+        // Bildirim sesi
+        const soundRow = new Adw.SwitchRow({
+            title: 'Bildirim Sesi',
+            subtitle: 'Bildirim geldiğinde ses çal',
+        });
+        group.add(soundRow);
+        this._settings.bind('notification-sound', soundRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     }
 
+    // Görünüm Sayfası
     _buildDisplayPage(page) {
-        const group = new Adw.PreferencesGroup({
-            title: 'Gösterim Ayarları',
-            description: 'Panel görünümü',
+        // Panel Görünümü Grubu
+        const appearanceGroup = new Adw.PreferencesGroup({
+            title: 'Panel Görünümü',
+            description: 'Paneldeki görünüm ayarları',
         });
-        page.add(group);
+        page.add(appearanceGroup);
+
+        // Görünüm modu
+        const modeRow = new Adw.ComboRow({
+            title: 'Görünüm Modu',
+            subtitle: 'Panelde nasıl görünsün',
+        });
+
+        const modeModel = new Gtk.StringList();
+        modeModel.append('Tam Metin');
+        modeModel.append('Sadece İkon');
+        modeModel.append('Kompakt');
+        modeRow.model = modeModel;
+
+        const modeMap = { 'text': 0, 'icon': 1, 'compact': 2 };
+        const reverseModeMap = ['text', 'icon', 'compact'];
+
+        modeRow.selected = modeMap[this._settings.get_string('display-mode')] || 0;
+
+        modeRow.connect('notify::selected', () => {
+            this._settings.set_string('display-mode', reverseModeMap[modeRow.selected]);
+        });
+
+        appearanceGroup.add(modeRow);
+
+        // Vakit adı göster
+        const showNameRow = new Adw.SwitchRow({
+            title: 'Vakit Adını Göster',
+            subtitle: '"İkindi" gibi vakit ismi',
+        });
+        appearanceGroup.add(showNameRow);
+        this._settings.bind('show-prayer-name', showNameRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+
+        // Vakit saati göster
+        const showTimeRow = new Adw.SwitchRow({
+            title: 'Vakit Saatini Göster',
+            subtitle: '"14:52" gibi saat bilgisi',
+        });
+        appearanceGroup.add(showTimeRow);
+        this._settings.bind('show-prayer-time', showTimeRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+
+        // Geri Sayım Grubu
+        const countdownGroup = new Adw.PreferencesGroup({
+            title: 'Geri Sayım',
+            description: 'Vakte kalan süre gösterimi',
+        });
+        page.add(countdownGroup);
 
         // Geri sayım göster
         const countdownRow = new Adw.SwitchRow({
             title: 'Geri Sayım Göster',
-            subtitle: 'Sonraki vakte kalan süreyi panelde göster',
+            subtitle: 'Sonraki vakte kalan süreyi göster',
         });
-        group.add(countdownRow);
+        countdownGroup.add(countdownRow);
         this._settings.bind('show-countdown', countdownRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+
+        // Geri sayım eşiği
+        const thresholdRow = new Adw.SpinRow({
+            title: 'Geri Sayım Eşiği',
+            subtitle: 'Ne kadar süre kala geri sayım başlasın (dakika)',
+            adjustment: new Gtk.Adjustment({
+                lower: 5,
+                upper: 180,
+                step_increment: 5,
+                page_increment: 15,
+            }),
+        });
+        countdownGroup.add(thresholdRow);
+        this._settings.bind('countdown-threshold-minutes', thresholdRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+
+        // Panel Konumu Grubu
+        const positionGroup = new Adw.PreferencesGroup({
+            title: 'Panel Konumu',
+        });
+        page.add(positionGroup);
 
         // Panel konumu
         const positionRow = new Adw.ComboRow({
-            title: 'Panel Konumu',
+            title: 'Konum',
             subtitle: 'Extension panelde nerede gösterilecek',
         });
 
@@ -293,27 +372,109 @@ export default class PraytimePreferences extends ExtensionPreferences {
         positionRow.model = positionModel;
 
         const positionMap = { 'left': 0, 'center': 1, 'right': 2 };
-        const reverseMap = ['left', 'center', 'right'];
+        const reversePositionMap = ['left', 'center', 'right'];
 
         positionRow.selected = positionMap[this._settings.get_string('panel-position')] || 2;
 
-        // Settings değişikliğini dinle
-        const signalId = this._settings.connect('changed::panel-position', () => {
-            const pos = this._settings.get_string('panel-position');
-            if (positionRow.selected !== positionMap[pos]) {
-                positionRow.selected = positionMap[pos] || 2;
-            }
-        });
-
         positionRow.connect('notify::selected', () => {
-            this._settings.set_string('panel-position', reverseMap[positionRow.selected]);
+            this._settings.set_string('panel-position', reversePositionMap[positionRow.selected]);
         });
 
-        // Pencere kapatıldığında signal'i temizle
-        page.connect('destroy', () => {
-            this._settings.disconnect(signalId);
+        positionGroup.add(positionRow);
+    }
+
+    // Hakkında Sayfası
+    _buildAboutPage(page) {
+        const group = new Adw.PreferencesGroup();
+        page.add(group);
+
+        // Logo/Başlık
+        const headerBox = new Gtk.Box({
+            orientation: Gtk.Orientation.VERTICAL,
+            spacing: 12,
+            margin_top: 24,
+            margin_bottom: 24,
+            halign: Gtk.Align.CENTER,
         });
 
-        group.add(positionRow);
+        const icon = new Gtk.Image({
+            icon_name: 'preferences-system-time-symbolic',
+            pixel_size: 64,
+        });
+        headerBox.append(icon);
+
+        const titleLabel = new Gtk.Label({
+            label: '<b><big>Praytime</big></b>',
+            use_markup: true,
+        });
+        headerBox.append(titleLabel);
+
+        const subtitleLabel = new Gtk.Label({
+            label: 'GNOME Shell Extension',
+            css_classes: ['dim-label'],
+        });
+        headerBox.append(subtitleLabel);
+
+        const versionLabel = new Gtk.Label({
+            label: 'Sürüm 0.2.0',
+            css_classes: ['dim-label'],
+        });
+        headerBox.append(versionLabel);
+
+        group.add(headerBox);
+
+        // Bilgi grubu
+        const infoGroup = new Adw.PreferencesGroup();
+        page.add(infoGroup);
+
+        const developerRow = new Adw.ActionRow({
+            title: 'Geliştirici',
+            subtitle: 'erho.dev',
+        });
+        infoGroup.add(developerRow);
+
+        const licenseRow = new Adw.ActionRow({
+            title: 'Lisans',
+            subtitle: 'GPL-3.0',
+        });
+        infoGroup.add(licenseRow);
+
+        // Linkler grubu
+        const linksGroup = new Adw.PreferencesGroup({
+            title: 'Bağlantılar',
+        });
+        page.add(linksGroup);
+
+        const githubRow = new Adw.ActionRow({
+            title: 'GitHub',
+            subtitle: 'Kaynak kodu görüntüle',
+            activatable: true,
+        });
+        githubRow.add_suffix(new Gtk.Image({
+            icon_name: 'external-link-symbolic',
+        }));
+        githubRow.connect('activated', () => {
+            Gio.AppInfo.launch_default_for_uri(
+                'https://github.com/erhanurgun/LINUX-ubuntu-gnome-praytime-extension',
+                null
+            );
+        });
+        linksGroup.add(githubRow);
+
+        const issueRow = new Adw.ActionRow({
+            title: 'Hata Bildir',
+            subtitle: 'Sorun veya önerileri bildirin',
+            activatable: true,
+        });
+        issueRow.add_suffix(new Gtk.Image({
+            icon_name: 'external-link-symbolic',
+        }));
+        issueRow.connect('activated', () => {
+            Gio.AppInfo.launch_default_for_uri(
+                'https://github.com/erhanurgun/LINUX-ubuntu-gnome-praytime-extension/issues',
+                null
+            );
+        });
+        linksGroup.add(issueRow);
     }
 }

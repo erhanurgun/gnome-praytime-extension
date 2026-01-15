@@ -5,14 +5,19 @@ import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
 // Bildirim yöneticisi
 export class NotificationManager {
-    constructor() {
+    constructor(settings) {
+        this._settings = settings;
         this._source = null;
     }
 
     // Bildirim goster
     show(title, body) {
         this._ensureSource();
-        this._playSound();
+
+        // Ses ayarını kontrol et
+        if (this._settings.get_boolean('notification-sound')) {
+            this._playSound();
+        }
 
         const notification = new MessageTray.Notification({
             source: this._source,
@@ -27,7 +32,11 @@ export class NotificationManager {
     // Acil bildirim
     showUrgent(title, body) {
         this._ensureSource();
-        this._playSound();
+
+        // Ses ayarını kontrol et
+        if (this._settings.get_boolean('notification-sound')) {
+            this._playSound();
+        }
 
         const notification = new MessageTray.Notification({
             source: this._source,
@@ -43,20 +52,22 @@ export class NotificationManager {
     // Bildirim sesi çal
     _playSound() {
         try {
-            const soundFile = Gio.File.new_for_uri(
-                'resource:///org/gnome/shell/theme/sounds/message.oga'
-            );
+            // Freedesktop standart bildirim sesi
+            const soundPaths = [
+                '/usr/share/sounds/freedesktop/stereo/message.oga',
+                '/usr/share/sounds/gnome/default/alerts/glass.ogg',
+                '/usr/share/sounds/ubuntu/stereo/message.ogg',
+            ];
 
-            if (soundFile.query_exists(null)) {
-                GLib.spawn_command_line_async(
-                    `paplay ${soundFile.get_path()}`
-                );
-            } else {
-                // Alternatif sistem sesi
-                GLib.spawn_command_line_async(
-                    'paplay /usr/share/sounds/freedesktop/stereo/message.oga'
-                );
+            for (const soundPath of soundPaths) {
+                const soundFile = Gio.File.new_for_path(soundPath);
+                if (soundFile.query_exists(null)) {
+                    GLib.spawn_command_line_async(`paplay ${soundPath}`);
+                    return;
+                }
             }
+
+            console.log('[Praytime] Bildirim sesi dosyası bulunamadı');
         } catch (error) {
             console.log(`[Praytime] Ses çalma hatası: ${error.message}`);
         }
@@ -79,5 +90,6 @@ export class NotificationManager {
             this._source.destroy();
             this._source = null;
         }
+        this._settings = null;
     }
 }

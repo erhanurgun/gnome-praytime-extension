@@ -2,6 +2,30 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.2.0] - 2026-01-15
+
+### Eklendi
+- Geri sayım eşiği ayarı (varsayılan 60 dk, 5-180 dk arası)
+- Görünüm modları: Tam Metin, Sadece İkon, Kompakt
+- Panel konumu anında değişim desteği
+- Timeline popup tasarımı (aktif/sonraki/geçmiş vakit ayrımı)
+- Cami ikonu (mosque-symbolic.svg)
+- Hakkında sayfası (geliştirici, lisans, GitHub linki)
+- Bildirim sesi açma/kapama ayarı
+- Vakit adı ve saati ayrı ayrı gösterme seçenekleri
+
+### Değişti
+- Ayarlar paneli tamamen yeniden tasarlandı (4 sayfa: Konum, Bildirimler, Görünüm, Hakkında)
+- Popup menü timeline görünümüne geçirildi
+- Geçmiş vakitler soluk, aktif vakit turuncu, sonraki vakit vurgulu
+- UI/UX profesyonelleştirildi
+
+### Teknik
+- extension.js'e _repositionPanel metodu eklendi
+- PanelButton.js tamamen yeniden yazıldı (Timeline desteği)
+- stylesheet.css Timeline stilleri eklendi
+- gschema.xml'e 5 yeni ayar eklendi
+
 ## [0.1.1] - 2026-01-15
 
 ### Düzeltildi
