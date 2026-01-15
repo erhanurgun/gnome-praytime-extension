@@ -2,6 +2,33 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.5.0] - 2026-01-16
+
+### Eklendi
+- Dependency Injection mimarisi (ServiceFactory)
+- GLibTimerAdapter: timer soyutlama katmanı
+- TimerManager: geri sayım ve günlük yenileme yönetimi
+- NotificationScheduler: bildirim zamanlama servisi
+- StyleHelper: DRY stil yönetimi
+- MockTimerAdapter: test için timer simülasyonu
+- TimerManager.test.js ve NotificationScheduler.test.js testleri
+
+### Değişti
+- PrayerTimeService artık sadece orchestrator (SRP)
+- Factory pattern ile merkezi bağımlılık yönetimi
+- prefs.js DRY yardımcı metodları eklendi
+- extension.js handler map yapısı (KISS)
+- Gereksiz yorumlar temizlendi (YAGNI)
+
+### Teknik
+- src/factory.js: ServiceFactory - lazy singleton DI container
+- src/infrastructure/timer/GLibTimerAdapter.js: GLib timer wrapper
+- src/application/TimerManager.js: countdown ve daily refresh
+- src/application/NotificationScheduler.js: bildirim zamanlama
+- src/presentation/helpers/StyleHelper.js: koşullu stil yönetimi
+- tests/mocks/MockTimerAdapter.js: test timer simülasyonu
+- SOLID/DRY/KISS/YAGNI prensiplerine %100 uyum
+
 ## [0.4.0] - 2026-01-16
 
 ### Eklendi

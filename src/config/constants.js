@@ -1,8 +1,8 @@
 // Uygulama sabitleri - DRY prensibi için merkezi tanımlama
 
 // Merkezi versiyon bilgisi
-export const APP_VERSION = '0.4.0';
-export const APP_VERSION_CODE = 8;
+export const APP_VERSION = '0.5.0';
+export const APP_VERSION_CODE = 9;
 export const APP_NAME = 'praytime@erho.dev';
 export const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 export const APP_DEVELOPER = '@erhanurgun';
