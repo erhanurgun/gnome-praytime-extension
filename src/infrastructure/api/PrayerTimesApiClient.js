@@ -7,7 +7,7 @@ const API_BASE_URL = 'https://prayertimes.api.abdus.dev';
 export class PrayerTimesApiClient {
     constructor() {
         this._session = new Soup.Session({
-            user_agent: 'praytime@erho.dev/0.1.0',
+            user_agent: 'praytime@erho.dev/0.1.1',
             timeout: 30,
         });
     }

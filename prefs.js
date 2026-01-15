@@ -12,7 +12,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         this._settings = this.getSettings();
         this._session = new Soup.Session({
-            user_agent: 'praytime@erho.dev/0.1.0',
+            user_agent: 'praytime@erho.dev/0.1.1',
             timeout: 30,
         });
 
@@ -118,34 +118,42 @@ export default class PraytimePreferences extends ExtensionPreferences {
     }
 
     // Şehir ara
-    async _searchCity(query) {
+    _searchCity(query) {
         // Önceki sonuçları temizle
         this._clearResults();
 
         const url = `${API_BASE_URL}/api/diyanet/search?q=${encodeURIComponent(query)}`;
+        const message = Soup.Message.new('GET', url);
 
-        try {
-            const message = Soup.Message.new('GET', url);
-            const bytes = await this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null);
+        this._session.send_and_read_async(
+            message,
+            GLib.PRIORITY_DEFAULT,
+            null,
+            (session, result) => {
+                try {
+                    const bytes = session.send_and_read_finish(result);
+                    const status = message.get_status();
 
-            if (message.get_status() !== 200) {
-                this._showError('Arama başarısız');
-                return;
+                    if (status !== 200) {
+                        this._showError(`Arama başarısız (HTTP ${status})`);
+                        return;
+                    }
+
+                    const text = new TextDecoder().decode(bytes.get_data());
+                    const results = JSON.parse(text);
+
+                    if (!results || results.length === 0) {
+                        this._showError('Sonuç bulunamadı');
+                        return;
+                    }
+
+                    this._showResults(results);
+                } catch (error) {
+                    console.error(`[Praytime] Arama hatası: ${error.message}`);
+                    this._showError('Arama sırasında hata oluştu');
+                }
             }
-
-            const text = new TextDecoder().decode(bytes.get_data());
-            const results = JSON.parse(text);
-
-            if (!results || results.length === 0) {
-                this._showError('Sonuç bulunamadı');
-                return;
-            }
-
-            this._showResults(results);
-        } catch (error) {
-            console.error(`[Praytime] Arama hatası: ${error.message}`);
-            this._showError('Arama sırasında hata oluştu');
-        }
+        );
     }
 
     // Sonuçları göster
