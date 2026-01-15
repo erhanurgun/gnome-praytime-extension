@@ -2,40 +2,29 @@ import GLib from 'gi://GLib';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { PanelButton } from './src/presentation/PanelButton.js';
-import { NotificationManager } from './src/presentation/NotificationManager.js';
-import { PrayerTimeService } from './src/application/PrayerTimeService.js';
+import { ServiceFactory } from './src/factory.js';
 
-// Ana extension sınıfı
 export default class PraytimeExtension extends Extension {
     enable() {
         console.log('[Praytime] Extension etkinleştiriliyor...');
 
         this._isEnabled = true;
         this._settings = this.getSettings();
-        this._notificationManager = new NotificationManager(this._settings);
 
-        // Panel butonu oluştur
-        this._panelButton = new PanelButton(this);
+        this._factory = new ServiceFactory(this._settings, this);
 
-        // Servis oluştur ve callback'leri bağla
-        this._service = new PrayerTimeService(
-            this._settings,
+        this._notificationManager = this._factory.createNotificationManager();
+        this._panelButton = this._factory.createPanelButton();
+        this._service = this._factory.createPrayerTimeService(
             () => this._onUpdate(),
             (title, body) => this._onNotification(title, body)
         );
 
-        // Panele ekle
         const position = this._settings.get_string('panel-position');
         Main.panel.addToStatusArea('praytime-indicator', this._panelButton, 0, position);
 
-        // Servisi başlat
         this._service.start();
-
-        // Ayar değişikliklerini dinle
-        this._settingsChangedId = this._settings.connect('changed', (settings, key) => {
-            this._onSettingsChanged(key);
-        });
+        this._connectSettings();
 
         console.log('[Praytime] Extension etkinleştirildi');
     }
@@ -44,69 +33,88 @@ export default class PraytimeExtension extends Extension {
         console.log('[Praytime] Extension devre dışı bırakılıyor...');
 
         this._isEnabled = false;
+        this._disconnectSettings();
 
-        // Ayar dinleyicisini kaldır
-        if (this._settingsChangedId) {
-            this._settings.disconnect(this._settingsChangedId);
-            this._settingsChangedId = null;
-        }
-
-        // Servisi durdur
         if (this._service) {
-            this._service.stop();
+            this._service.destroy();
             this._service = null;
         }
 
-        // Bildirim yöneticisini temizle
-        if (this._notificationManager) {
-            this._notificationManager.destroy();
-            this._notificationManager = null;
+        if (this._factory) {
+            this._factory.destroyAll();
+            this._factory = null;
         }
 
-        // Panel butonunu kaldır
         if (this._panelButton) {
             this._panelButton.destroy();
             this._panelButton = null;
         }
 
+        this._notificationManager = null;
         this._settings = null;
 
         console.log('[Praytime] Extension devre dışı bırakıldı');
     }
 
-    // UI güncelleme callback'i
-    _onUpdate() {
-        if (this._panelButton && this._service) {
-            this._panelButton.update(this._service);
+    _connectSettings() {
+        this._settingsChangedId = this._settings.connect('changed', (_, key) => {
+            this._handleSettingChange(key);
+        });
+    }
+
+    _disconnectSettings() {
+        if (this._settingsChangedId) {
+            this._settings.disconnect(this._settingsChangedId);
+            this._settingsChangedId = null;
         }
     }
 
-    // Bildirim callback'i
-    _onNotification(title, body) {
-        if (this._notificationManager) {
-            this._notificationManager.show(title, body);
+    _handleSettingChange(key) {
+        if (!this._isEnabled) return;
+
+        const handlers = {
+            'panel-position': () => this._repositionPanel(),
+            'display-mode': () => this._onUpdate(),
+            'show-prayer-name': () => this._onUpdate(),
+            'show-prayer-time': () => this._onUpdate(),
+            'show-countdown': () => this._onUpdate(),
+            'countdown-threshold-minutes': () => this._onUpdate(),
+            'location-id': () => this._restartService(),
+            'city-name': () => this._restartService(),
+            'region-name': () => this._restartService(),
+        };
+
+        handlers[key]?.();
+    }
+
+    async _restartService() {
+        if (!this._service) return;
+
+        this._service.stop();
+        if (!this._isEnabled) return;
+
+        try {
+            await this._service.start();
+        } catch (error) {
+            console.error(`[Praytime] Servis yeniden başlatılamadı: ${error.message}`);
         }
     }
 
-    // Panel konumunu değiştir
     _repositionPanel() {
         const newPosition = this._settings.get_string('panel-position');
 
-        // Main.panel.statusArea'dan öğeyi düzgün kaldır
         if (this._panelButton) {
             Main.panel.statusArea['praytime-indicator'] = null;
             this._panelButton.destroy();
             this._panelButton = null;
         }
 
-        // Race condition'u önlemek için sonraki frame'de ekle
         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
             if (!this._isEnabled) return GLib.SOURCE_REMOVE;
 
-            this._panelButton = new PanelButton(this);
+            this._panelButton = this._factory.createPanelButton();
             Main.panel.addToStatusArea('praytime-indicator', this._panelButton, 0, newPosition);
 
-            // UI güncelle
             if (this._service) {
                 this._panelButton.update(this._service);
             }
@@ -116,38 +124,11 @@ export default class PraytimeExtension extends Extension {
         });
     }
 
-    // Ayar değişikliği - race condition korumalı
-    async _onSettingsChanged(key) {
-        // Extension disable edilmişse işlem yapma
-        if (!this._isEnabled) return;
+    _onUpdate() {
+        this._panelButton?.update(this._service);
+    }
 
-        // Panel konumu değişikliği - anında uygula
-        if (key === 'panel-position') {
-            this._repositionPanel();
-            return;
-        }
-
-        // Görünüm ayarları değişikliği - UI güncelle
-        if (['display-mode', 'show-prayer-name', 'show-prayer-time', 'show-countdown', 'countdown-threshold-minutes'].includes(key)) {
-            this._onUpdate();
-            return;
-        }
-
-        // Konum değiştiğinde servisi yeniden başlat
-        if (['location-id', 'city-name', 'region-name'].includes(key)) {
-            // Servis null kontrolü
-            if (!this._service) return;
-
-            this._service.stop();
-
-            // Async işlem öncesi tekrar kontrol
-            if (!this._isEnabled || !this._service) return;
-
-            try {
-                await this._service.start();
-            } catch (error) {
-                console.error(`[Praytime] Servis yeniden başlatılamadı: ${error.message}`);
-            }
-        }
+    _onNotification(title, body) {
+        this._notificationManager?.show(title, body);
     }
 }
