@@ -57,7 +57,6 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
     }
 
-    // DRY: Dropdown model oluşturma
     _createDropdownModel(items) {
         const model = new Gtk.StringList();
         for (const item of items) {
@@ -66,7 +65,6 @@ export default class PraytimePreferences extends ExtensionPreferences {
         return model;
     }
 
-    // DRY: Signal handler kaydetme
     _connectAndTrack(widget, signal, callback) {
         const handlerId = widget.connect(signal, callback);
         this._signalHandlers.push({ widget, handlerId });
@@ -289,7 +287,6 @@ export default class PraytimePreferences extends ExtensionPreferences {
         this._addLinkRow(linksGroup, 'Hata Bildir', 'Sorun veya önerileri bildirin', 'https://github.com/erhanurgun/LINUX-ubuntu-gnome-praytime-extension/issues');
     }
 
-    // DRY: Link satırı oluşturma
     _addLinkRow(group, title, subtitle, url) {
         const row = new Adw.ActionRow({
             title,

@@ -1,6 +1,5 @@
 import GLib from 'gi://GLib';
 
-// GLib timer işlemlerini sarmalayan adapter
 export class GLibTimerAdapter {
     constructor() {
         this._activeTimers = new Set();

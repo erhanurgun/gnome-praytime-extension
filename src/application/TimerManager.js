@@ -1,4 +1,3 @@
-// Geri sayım ve günlük yenileme timer yönetimi
 export class TimerManager {
     constructor(timerAdapter) {
         this._timerAdapter = timerAdapter;

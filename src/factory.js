@@ -7,7 +7,6 @@ import { PrayerTimeService } from './application/PrayerTimeService.js';
 import { NotificationManager } from './presentation/NotificationManager.js';
 import { PanelButton } from './presentation/PanelButton.js';
 
-// Bağımlılık enjeksiyon fabrikası
 export class ServiceFactory {
     constructor(settings, extension) {
         this._settings = settings;

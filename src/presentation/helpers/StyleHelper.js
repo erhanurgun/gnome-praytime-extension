@@ -1,4 +1,3 @@
-// Stil yönetim yardımcısı
 export class StyleHelper {
     static applyConditional(widget, className, condition) {
         if (condition) {

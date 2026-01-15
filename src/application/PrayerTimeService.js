@@ -1,6 +1,5 @@
 import { PrayerSchedule } from '../domain/models/PrayerSchedule.js';
 
-// Namaz vakitleri orchestrator - DI ile bağımlılıkları alır
 export class PrayerTimeService {
     constructor(dependencies) {
         const {

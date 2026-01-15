@@ -1,4 +1,3 @@
-// Bildirim zamanlama servisi
 export class NotificationScheduler {
     constructor({ timerAdapter, settings }) {
         this._timerAdapter = timerAdapter;
