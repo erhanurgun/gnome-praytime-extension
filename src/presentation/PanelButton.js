@@ -4,7 +4,7 @@ import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import { getPrayerNamesList } from '../config/constants.js';
+import { getPrayerNamesList, APP_VERSION, APP_DEVELOPER, APP_WEBSITE } from '../config/constants.js';
 
 // Panel üzerindeki namaz vakti butonu
 export const PanelButton = GObject.registerClass(
@@ -78,12 +78,12 @@ class PanelButton extends PanelMenu.Button {
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         // Sürüm ve geliştirici bilgisi
-        const versionItem = new PopupMenu.PopupMenuItem('v0.2.3 | @erhanurgun', {
+        const versionItem = new PopupMenu.PopupMenuItem(`v${APP_VERSION} | ${APP_DEVELOPER}`, {
             style_class: 'praytime-version',
         });
         this._versionItem = versionItem;
         this._versionHandlerId = versionItem.connect('activate', () => {
-            GLib.spawn_command_line_async('xdg-open https://erho.me');
+            GLib.spawn_command_line_async(`xdg-open ${APP_WEBSITE}`);
         });
         this.menu.addMenuItem(versionItem);
     }
@@ -98,15 +98,29 @@ class PanelButton extends PanelMenu.Button {
         const nextPrayer = service.getNextPrayer();
         const schedule = service.schedule;
         const location = service.location;
-        const showCountdown = this._extension.getSettings().get_boolean('show-countdown');
+
+        // Schedule null ise bağlantı hatası veya yükleme durumu
+        if (!schedule) {
+            this._label.set_text('Bağlantı hatası');
+            this._locationItem.label.set_text('Konum: Yüklenemedi');
+            return;
+        }
+        const settings = this._extension.getSettings();
+        const showCountdown = settings.get_boolean('show-countdown');
+        const thresholdMinutes = settings.get_int('countdown-threshold-minutes');
 
         // Panel label
         if (nextPrayer) {
             let labelText = `${nextPrayer.name} ${nextPrayer.timeString}`;
 
             if (showCountdown) {
-                const remaining = nextPrayer.getSecondsUntil();
-                labelText += ` (${this._formatCountdown(remaining)})`;
+                const remainingSeconds = nextPrayer.getSecondsUntil();
+                const remainingMinutes = Math.floor(remainingSeconds / 60);
+
+                // Sadece eşik değerinin altındaysa geri sayımı göster
+                if (remainingMinutes <= thresholdMinutes) {
+                    labelText += ` (${this._formatCountdown(remainingSeconds)})`;
+                }
             }
 
             this._label.set_text(labelText);

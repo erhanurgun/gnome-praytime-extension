@@ -1,20 +1,23 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
-import Soup from 'gi://Soup';
-import GLib from 'gi://GLib';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
-import { API_BASE_URL, DISPLAY_MODES, PANEL_POSITIONS, getIndexFromValue, getValueFromIndex } from './src/config/constants.js';
+import {
+    DISPLAY_MODES,
+    PANEL_POSITIONS,
+    TURKEY_CITIES,
+    getCityIndexById,
+    getIndexFromValue,
+    getValueFromIndex,
+    APP_VERSION,
+    APP_DEVELOPER,
+    APP_WEBSITE,
+} from './src/config/constants.js';
 
 // Tercihler penceresi
 export default class PraytimePreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         this._settings = this.getSettings();
-        this._session = new Soup.Session({
-            user_agent: 'praytime@erho.dev/0.2.1',
-            timeout: 30,
-        });
-        this._cancellable = null;
         this._signalHandlers = [];
 
         // Konum Sayfası
@@ -51,11 +54,6 @@ export default class PraytimePreferences extends ExtensionPreferences {
 
         // Pencere kapatıldığında temizle
         window.connect('destroy', () => {
-            // Aktif istekleri iptal et
-            if (this._cancellable) {
-                this._cancellable.cancel();
-                this._cancellable = null;
-            }
             // Signal handler'larını temizle
             for (const { widget, handlerId } of this._signalHandlers) {
                 if (widget && handlerId) {
@@ -63,210 +61,55 @@ export default class PraytimePreferences extends ExtensionPreferences {
                 }
             }
             this._signalHandlers = [];
-            this._session = null;
         });
     }
 
-    // Konum Sayfası
+    // Konum Sayfası - Dropdown il seçimi
     _buildLocationPage(page) {
-        // Mevcut konum grubu
-        const currentGroup = new Adw.PreferencesGroup({
-            title: 'Mevcut Konum',
-            description: 'Namaz vakitlerinin hesaplandığı konum',
+        const locationGroup = new Adw.PreferencesGroup({
+            title: 'İl Seçimi',
+            description: 'Namaz vakitlerinin hesaplanacağı ili seçin',
         });
-        page.add(currentGroup);
+        page.add(locationGroup);
 
-        const cityName = this._settings.get_string('city-name');
-        const regionName = this._settings.get_string('region-name');
-        const locationId = this._settings.get_int('location-id');
-
-        this._currentLocationRow = new Adw.ActionRow({
-            title: cityName,
-            subtitle: regionName !== cityName ? `${regionName} - ID: ${locationId}` : `ID: ${locationId}`,
-            icon_name: 'mark-location-symbolic',
-        });
-        currentGroup.add(this._currentLocationRow);
-
-        // Şehir arama grubu
-        const searchGroup = new Adw.PreferencesGroup({
-            title: 'Konum Ara',
-            description: 'Şehir veya ilçe adı girerek arayın',
-        });
-        page.add(searchGroup);
-
-        const searchEntry = new Adw.EntryRow({
-            title: 'Şehir/İlçe Adı',
-        });
-        searchGroup.add(searchEntry);
-
-        const searchButton = new Gtk.Button({
-            label: 'Ara',
-            css_classes: ['suggested-action'],
-            margin_start: 12,
-            margin_end: 12,
-            margin_top: 6,
-            margin_bottom: 6,
+        // Dropdown il seçimi
+        const cityRow = new Adw.ComboRow({
+            title: 'İl',
+            subtitle: 'Türkiye\'nin 81 ilinden birini seçin',
         });
 
-        const buttonBox = new Gtk.Box({
-            orientation: Gtk.Orientation.HORIZONTAL,
-            halign: Gtk.Align.END,
-        });
-        buttonBox.append(searchButton);
-        searchGroup.add(buttonBox);
+        const cityModel = new Gtk.StringList();
+        for (const city of TURKEY_CITIES) {
+            cityModel.append(city.name);
+        }
+        cityRow.model = cityModel;
 
-        // Arama sonuçları grubu
-        this._resultsGroup = new Adw.PreferencesGroup({
-            title: 'Arama Sonuçları',
-            visible: false,
-        });
-        page.add(this._resultsGroup);
+        // Mevcut seçimi bul ve ayarla
+        const currentId = this._settings.get_int('location-id');
+        const currentIndex = getCityIndexById(currentId);
+        cityRow.selected = currentIndex >= 0 ? currentIndex : 0;
 
-        // Arama işlevi - signal handler'larını kaydet
-        const buttonHandlerId = searchButton.connect('clicked', () => {
-            const query = searchEntry.text.trim();
-            if (query.length >= 2) {
-                this._searchCity(query);
+        // Değişiklik dinle
+        const cityHandlerId = cityRow.connect('notify::selected', () => {
+            const selected = TURKEY_CITIES[cityRow.selected];
+            if (selected) {
+                this._settings.set_int('location-id', selected.id);
+                this._settings.set_string('city-name', selected.name);
+                this._settings.set_string('region-name', selected.name);
+                console.log(`[Praytime] İl seçildi: ${selected.name} (ID: ${selected.id})`);
             }
         });
-        this._signalHandlers.push({ widget: searchButton, handlerId: buttonHandlerId });
+        this._signalHandlers.push({ widget: cityRow, handlerId: cityHandlerId });
 
-        const entryHandlerId = searchEntry.connect('entry-activated', () => {
-            const query = searchEntry.text.trim();
-            if (query.length >= 2) {
-                this._searchCity(query);
-            }
+        locationGroup.add(cityRow);
+
+        // Bilgi satırı
+        const infoRow = new Adw.ActionRow({
+            title: 'Konum Bilgisi',
+            subtitle: 'Vakitler Diyanet İşleri Başkanlığı verilerine göre hesaplanır',
+            icon_name: 'dialog-information-symbolic',
         });
-        this._signalHandlers.push({ widget: searchEntry, handlerId: entryHandlerId });
-    }
-
-    // Şehir ara
-    _searchCity(query) {
-        this._clearResults();
-
-        const url = `${API_BASE_URL}/api/diyanet/search?q=${encodeURIComponent(query)}`;
-        console.log(`[Praytime] Arama URL: ${url}`);
-
-        const message = Soup.Message.new('GET', url);
-        if (!message) {
-            console.error('[Praytime] Soup.Message oluşturulamadı');
-            this._showError('Bağlantı hatası');
-            return;
-        }
-
-        // Önceki isteği iptal et
-        if (this._cancellable) {
-            this._cancellable.cancel();
-        }
-        this._cancellable = new Gio.Cancellable();
-
-        this._session.send_and_read_async(
-            message,
-            GLib.PRIORITY_DEFAULT,
-            this._cancellable,
-            (session, result) => {
-                try {
-                    const bytes = session.send_and_read_finish(result);
-                    const status = message.get_status();
-                    console.log(`[Praytime] HTTP Status: ${status}`);
-
-                    if (status !== 200) {
-                        this._showError(`Arama başarısız (HTTP ${status})`);
-                        return;
-                    }
-
-                    const data = bytes.get_data();
-                    if (!data || data.length === 0) {
-                        console.error('[Praytime] Boş yanıt alındı');
-                        this._showError('Sunucudan yanıt alınamadı');
-                        return;
-                    }
-
-                    const text = new TextDecoder('utf-8').decode(data);
-                    console.log(`[Praytime] Yanıt uzunluğu: ${text.length}`);
-
-                    const results = JSON.parse(text);
-                    console.log(`[Praytime] Sonuç sayısı: ${results ? results.length : 0}`);
-
-                    if (!results || results.length === 0) {
-                        this._showError('Sonuç bulunamadı');
-                        return;
-                    }
-
-                    this._showResults(results);
-                } catch (error) {
-                    console.error(`[Praytime] Arama hatası: ${error.message}`);
-                    console.error(`[Praytime] Stack: ${error.stack}`);
-                    this._showError('Arama sırasında hata oluştu');
-                }
-            }
-        );
-    }
-
-    // Sonuçları göster
-    _showResults(results) {
-        this._resultsGroup.visible = true;
-
-        const displayResults = results.slice(0, 10);
-
-        for (const result of displayResults) {
-            const displayName = result.region && result.region !== result.city
-                ? `${result.city}/${result.region}`
-                : result.city;
-
-            const row = new Adw.ActionRow({
-                title: displayName,
-                subtitle: `${result.country} - ID: ${result.id}`,
-                activatable: true,
-            });
-
-            row.add_suffix(new Gtk.Image({
-                icon_name: 'object-select-symbolic',
-            }));
-
-            row.connect('activated', () => {
-                this._selectLocation(result);
-            });
-
-            this._resultsGroup.add(row);
-        }
-    }
-
-    // Konum seç
-    _selectLocation(location) {
-        this._settings.set_int('location-id', location.id);
-        this._settings.set_string('city-name', location.city);
-        this._settings.set_string('region-name', location.region || location.city);
-
-        this._currentLocationRow.title = location.city;
-        this._currentLocationRow.subtitle = location.region && location.region !== location.city
-            ? `${location.region} - ID: ${location.id}`
-            : `ID: ${location.id}`;
-
-        this._resultsGroup.visible = false;
-        this._clearResults();
-    }
-
-    // Sonuçları temizle
-    _clearResults() {
-        let child = this._resultsGroup.get_first_child();
-        while (child) {
-            const next = child.get_next_sibling();
-            if (child instanceof Adw.ActionRow) {
-                this._resultsGroup.remove(child);
-            }
-            child = next;
-        }
-    }
-
-    // Hata göster
-    _showError(message) {
-        this._resultsGroup.visible = true;
-        const errorRow = new Adw.ActionRow({
-            title: message,
-            icon_name: 'dialog-warning-symbolic',
-        });
-        this._resultsGroup.add(errorRow);
+        locationGroup.add(infoRow);
     }
 
     // Bildirimler Sayfası
@@ -452,7 +295,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
         headerBox.append(subtitleLabel);
 
         const versionLabel = new Gtk.Label({
-            label: 'Sürüm 0.2.3',
+            label: `Sürüm ${APP_VERSION}`,
             css_classes: ['dim-label'],
         });
         headerBox.append(versionLabel);
@@ -465,7 +308,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
 
         const developerRow = new Adw.ActionRow({
             title: 'Geliştirici',
-            subtitle: '@erhanurgun - Erhan ÜRGÜN',
+            subtitle: `${APP_DEVELOPER} - Erhan ÜRGÜN`,
         });
         infoGroup.add(developerRow);
 
@@ -480,6 +323,21 @@ export default class PraytimePreferences extends ExtensionPreferences {
             title: 'Bağlantılar',
         });
         page.add(linksGroup);
+
+        // Tüm Bağlantılar (en üstte)
+        const allLinksRow = new Adw.ActionRow({
+            title: 'Tüm Bağlantılar',
+            subtitle: `${APP_WEBSITE} - Geliştirici hakkında`,
+            activatable: true,
+        });
+        allLinksRow.add_suffix(new Gtk.Image({
+            icon_name: 'external-link-symbolic',
+        }));
+        const allLinksHandlerId = allLinksRow.connect('activated', () => {
+            Gio.AppInfo.launch_default_for_uri(APP_WEBSITE, null);
+        });
+        this._signalHandlers.push({ widget: allLinksRow, handlerId: allLinksHandlerId });
+        linksGroup.add(allLinksRow);
 
         const githubRow = new Adw.ActionRow({
             title: 'GitHub',
@@ -514,22 +372,5 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         this._signalHandlers.push({ widget: issueRow, handlerId: issueHandlerId });
         linksGroup.add(issueRow);
-
-        const allLinksRow = new Adw.ActionRow({
-            title: 'Tüm Bağlantılar',
-            subtitle: 'erho.me',
-            activatable: true,
-        });
-        allLinksRow.add_suffix(new Gtk.Image({
-            icon_name: 'external-link-symbolic',
-        }));
-        const allLinksHandlerId = allLinksRow.connect('activated', () => {
-            Gio.AppInfo.launch_default_for_uri(
-                'https://erho.me',
-                null
-            );
-        });
-        this._signalHandlers.push({ widget: allLinksRow, handlerId: allLinksHandlerId });
-        linksGroup.add(allLinksRow);
     }
 }

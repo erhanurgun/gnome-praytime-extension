@@ -1,3 +1,4 @@
+import GLib from 'gi://GLib';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -91,22 +92,28 @@ export default class PraytimeExtension extends Extension {
     _repositionPanel() {
         const newPosition = this._settings.get_string('panel-position');
 
-        // Eski paneli kaldır
+        // Main.panel.statusArea'dan öğeyi düzgün kaldır
         if (this._panelButton) {
+            Main.panel.statusArea['praytime-indicator'] = null;
             this._panelButton.destroy();
             this._panelButton = null;
         }
 
-        // Yeni panel oluştur ve ekle
-        this._panelButton = new PanelButton(this);
-        Main.panel.addToStatusArea('praytime-indicator', this._panelButton, 0, newPosition);
+        // Race condition'u önlemek için sonraki frame'de ekle
+        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            if (!this._isEnabled) return GLib.SOURCE_REMOVE;
 
-        // UI güncelle
-        if (this._service) {
-            this._panelButton.update(this._service);
-        }
+            this._panelButton = new PanelButton(this);
+            Main.panel.addToStatusArea('praytime-indicator', this._panelButton, 0, newPosition);
 
-        console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
+            // UI güncelle
+            if (this._service) {
+                this._panelButton.update(this._service);
+            }
+
+            console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     // Ayar değişikliği - race condition korumalı

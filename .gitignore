@@ -1,26 +1,15 @@
 # IDE ve Editor
+/node_modules
 /.claude
 /.vscode
 /.idea
-*.swp
-*.swo
-*~
 
-# Build ciktilari
+# Build çıktıları
 *.zip
 dist/
 
 # Derlenmis dosyalar
 schemas/gschemas.compiled
-
-# Python (varsa)
-__pycache__/
-*.pyc
-*.pyo
-
-# Sistem dosyalari
-.DS_Store
-Thumbs.db
 
 # Gecici dosyalar
 *.tmp

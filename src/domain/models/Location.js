@@ -27,7 +27,8 @@ export class Location {
     isValid() {
         return (
             typeof this._id === 'number' &&
-            this._id > 0
+            this._id > 0 &&
+            Number.isFinite(this._id)
         );
     }
 

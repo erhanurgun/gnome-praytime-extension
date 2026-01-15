@@ -2,6 +2,51 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.4.0] - 2026-01-16
+
+### Eklendi
+- Dropdown ile il seçimi (81 Türkiye ili)
+- Merkezi versiyon yönetimi (constants.js)
+- Crash önleme mekanizmaları (null kontrolleri)
+- TURKEY_CITIES listesi ve yardımcı fonksiyonlar
+
+### Değişti
+- Konum seçimi artık arama yerine dropdown ile yapılıyor
+- Bağlantı hatası durumunda UI'da anlamlı mesaj gösteriliyor
+- Versiyon bilgisi tek yerden (constants.js) yönetiliyor
+- Hata durumunda extension crash olmuyor, UI güncelleniyor
+
+### Kaldırıldı
+- Şehir/ilçe arama özelliği (dropdown ile değiştirildi)
+- Soup session gerekliliği prefs.js'ten kaldırıldı
+
+### Teknik
+- constants.js: APP_VERSION, APP_USER_AGENT, APP_DEVELOPER, APP_WEBSITE sabitleri
+- constants.js: TURKEY_CITIES listesi (81 il, ID eşleştirmeli)
+- constants.js: getCityIdByName, getCityNameById, getCityIndexById fonksiyonları
+- PrayerTimeService.js: start() metoduna hata durumunda UI güncelleme
+- PanelButton.js: schedule null kontrolü ve "Bağlantı hatası" mesajı
+- prefs.js: Adw.ComboRow ile dropdown il seçimi
+- Tüm user_agent ve versiyon referansları merkezi constants'tan alınıyor
+
+## [0.3.0] - 2026-01-16
+
+### Eklendi
+- Geri sayım eşiği özelliği aktif hale getirildi (kalan süre > eşik ise geri sayım gizlenir)
+- İl merkezleri arama sonuçlarında öncelikli gösteriliyor
+- Birim testler eklendi (domain modelleri için)
+
+### Düzeltildi
+- Konum arama UI iyileştirildi (buton artık input'un yanında)
+- Arama sonrası input otomatik temizleniyor
+- countdown-threshold-minutes ayarı artık gerçekten çalışıyor
+
+### Teknik
+- PanelButton.js: Geri sayım eşiği kontrolü eklendi (satır 109-116)
+- prefs.js: searchEntry.add_suffix() ile buton konumlandırması
+- prefs.js: Arama sonuçları sıralaması (il merkezleri önce)
+- tests/ klasörü eklendi (PrayerTime, Location, PrayerSchedule testleri)
+
 ## [0.2.3] - 2026-01-15
 
 ### Düzeltildi

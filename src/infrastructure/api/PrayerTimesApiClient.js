@@ -1,13 +1,13 @@
 import Soup from 'gi://Soup';
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
-import { API_BASE_URL, PRAYER_NAMES } from '../../config/constants.js';
+import { API_BASE_URL, PRAYER_NAMES, APP_USER_AGENT } from '../../config/constants.js';
 
 // Diyanet namaz vakitleri API istemcisi
 export class PrayerTimesApiClient {
     constructor() {
         this._session = new Soup.Session({
-            user_agent: 'praytime@erho.dev/0.2.2',
+            user_agent: APP_USER_AGENT,
             timeout: 30,
         });
         this._cancellable = null;

@@ -32,6 +32,9 @@ export class PrayerTimeService {
             this._scheduleDailyRefresh();
         } catch (error) {
             console.error(`[Praytime] Servis başlatma hatası: ${error.message}`);
+            // Hata durumunda schedule null kalır, UI bunu "Bağlantı hatası" olarak gösterir
+            this._schedule = null;
+            this._triggerUpdate();
         }
     }
 
