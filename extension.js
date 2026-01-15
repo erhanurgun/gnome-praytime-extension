@@ -10,6 +10,7 @@ export default class PraytimeExtension extends Extension {
     enable() {
         console.log('[Praytime] Extension etkinleştiriliyor...');
 
+        this._isEnabled = true;
         this._settings = this.getSettings();
         this._notificationManager = new NotificationManager(this._settings);
 
@@ -40,6 +41,8 @@ export default class PraytimeExtension extends Extension {
 
     disable() {
         console.log('[Praytime] Extension devre dışı bırakılıyor...');
+
+        this._isEnabled = false;
 
         // Ayar dinleyicisini kaldır
         if (this._settingsChangedId) {
@@ -106,8 +109,11 @@ export default class PraytimeExtension extends Extension {
         console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
     }
 
-    // Ayar değişikliği
+    // Ayar değişikliği - race condition korumalı
     async _onSettingsChanged(key) {
+        // Extension disable edilmişse işlem yapma
+        if (!this._isEnabled) return;
+
         // Panel konumu değişikliği - anında uygula
         if (key === 'panel-position') {
             this._repositionPanel();
@@ -122,7 +128,14 @@ export default class PraytimeExtension extends Extension {
 
         // Konum değiştiğinde servisi yeniden başlat
         if (['location-id', 'city-name', 'region-name'].includes(key)) {
+            // Servis null kontrolü
+            if (!this._service) return;
+
             this._service.stop();
+
+            // Async işlem öncesi tekrar kontrol
+            if (!this._isEnabled || !this._service) return;
+
             try {
                 await this._service.start();
             } catch (error) {

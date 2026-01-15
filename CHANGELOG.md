@@ -2,6 +2,34 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.2.1] - 2026-01-15
+
+### Düzeltildi
+- GNOME 47 Soup3 API uyumluluğu (Gio.Cancellable kullanımı)
+- Konum arama HTTP isteklerinde hata yönetimi iyileştirildi
+- Boş API yanıtı kontrolleri eklendi
+- Version string tutarsızlığı giderildi
+- Import path hatası düzeltildi (GNOME 45+ uyumluluğu)
+- DRY ihlalleri giderildi (API_BASE_URL, PRAYER_NAMES merkezileştirildi)
+- Bellek sızıntısı riskleri giderildi (signal handler cleanup)
+- Async race condition koruması eklendi
+- Timer callback guard'ları eklendi
+
+### SOLID/DRY/KISS/YAGNI Düzeltmeleri
+- Boş utils/ klasörü silindi (YAGNI)
+- Kullanılmayan searchCity() metodu kaldırıldı (YAGNI)
+- DISPLAY_MODES ve PANEL_POSITIONS sabitleri constants.js'e taşındı (DRY)
+- prefs.js'te tekrarlanan modeMap/positionMap kaldırıldı (DRY)
+- NotificationManager show/showUrgent metodları birleştirildi (DRY)
+- LocationProvider gereksiz async kaldırıldı (KISS)
+
+### Teknik
+- src/config/constants.js dosyası eklendi (merkezi sabitler)
+- getIndexFromValue/getValueFromIndex yardımcı fonksiyonları eklendi
+- Debug loglama mekanizması eklendi
+- TextDecoder UTF-8 encoding açıkça belirtildi
+- Cancellable yönetimi iyileştirildi
+
 ## [0.2.0] - 2026-01-15
 
 ### Eklendi

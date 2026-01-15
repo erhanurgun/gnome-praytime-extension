@@ -3,18 +3,19 @@ import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
 import Soup from 'gi://Soup';
 import GLib from 'gi://GLib';
-import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
-
-const API_BASE_URL = 'https://prayertimes.api.abdus.dev';
+import { ExtensionPreferences } from 'resource:///org/gnome/shell/extensions/prefs.js';
+import { API_BASE_URL, DISPLAY_MODES, PANEL_POSITIONS, getIndexFromValue, getValueFromIndex } from './src/config/constants.js';
 
 // Tercihler penceresi
 export default class PraytimePreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         this._settings = this.getSettings();
         this._session = new Soup.Session({
-            user_agent: 'praytime@erho.dev/0.2.0',
+            user_agent: 'praytime@erho.dev/0.2.1',
             timeout: 30,
         });
+        this._cancellable = null;
+        this._signalHandlers = [];
 
         // Konum Sayfası
         const locationPage = new Adw.PreferencesPage({
@@ -50,6 +51,18 @@ export default class PraytimePreferences extends ExtensionPreferences {
 
         // Pencere kapatıldığında temizle
         window.connect('destroy', () => {
+            // Aktif istekleri iptal et
+            if (this._cancellable) {
+                this._cancellable.cancel();
+                this._cancellable = null;
+            }
+            // Signal handler'larını temizle
+            for (const { widget, handlerId } of this._signalHandlers) {
+                if (widget && handlerId) {
+                    widget.disconnect(handlerId);
+                }
+            }
+            this._signalHandlers = [];
             this._session = null;
         });
     }
@@ -109,20 +122,22 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         page.add(this._resultsGroup);
 
-        // Arama işlevi
-        searchButton.connect('clicked', () => {
+        // Arama işlevi - signal handler'larını kaydet
+        const buttonHandlerId = searchButton.connect('clicked', () => {
             const query = searchEntry.text.trim();
             if (query.length >= 2) {
                 this._searchCity(query);
             }
         });
+        this._signalHandlers.push({ widget: searchButton, handlerId: buttonHandlerId });
 
-        searchEntry.connect('entry-activated', () => {
+        const entryHandlerId = searchEntry.connect('entry-activated', () => {
             const query = searchEntry.text.trim();
             if (query.length >= 2) {
                 this._searchCity(query);
             }
         });
+        this._signalHandlers.push({ widget: searchEntry, handlerId: entryHandlerId });
     }
 
     // Şehir ara
@@ -130,25 +145,48 @@ export default class PraytimePreferences extends ExtensionPreferences {
         this._clearResults();
 
         const url = `${API_BASE_URL}/api/diyanet/search?q=${encodeURIComponent(query)}`;
+        console.log(`[Praytime] Arama URL: ${url}`);
+
         const message = Soup.Message.new('GET', url);
-        const cancellable = new Gio.Cancellable();
+        if (!message) {
+            console.error('[Praytime] Soup.Message oluşturulamadı');
+            this._showError('Bağlantı hatası');
+            return;
+        }
+
+        // Önceki isteği iptal et
+        if (this._cancellable) {
+            this._cancellable.cancel();
+        }
+        this._cancellable = new Gio.Cancellable();
 
         this._session.send_and_read_async(
             message,
             GLib.PRIORITY_DEFAULT,
-            cancellable,
+            this._cancellable,
             (session, result) => {
                 try {
                     const bytes = session.send_and_read_finish(result);
                     const status = message.get_status();
+                    console.log(`[Praytime] HTTP Status: ${status}`);
 
                     if (status !== 200) {
                         this._showError(`Arama başarısız (HTTP ${status})`);
                         return;
                     }
 
-                    const text = new TextDecoder().decode(bytes.get_data());
+                    const data = bytes.get_data();
+                    if (!data || data.length === 0) {
+                        console.error('[Praytime] Boş yanıt alındı');
+                        this._showError('Sunucudan yanıt alınamadı');
+                        return;
+                    }
+
+                    const text = new TextDecoder('utf-8').decode(data);
+                    console.log(`[Praytime] Yanıt uzunluğu: ${text.length}`);
+
                     const results = JSON.parse(text);
+                    console.log(`[Praytime] Sonuç sayısı: ${results ? results.length : 0}`);
 
                     if (!results || results.length === 0) {
                         this._showError('Sonuç bulunamadı');
@@ -158,6 +196,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
                     this._showResults(results);
                 } catch (error) {
                     console.error(`[Praytime] Arama hatası: ${error.message}`);
+                    console.error(`[Praytime] Stack: ${error.stack}`);
                     this._showError('Arama sırasında hata oluştu');
                 }
             }
@@ -293,19 +332,17 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
 
         const modeModel = new Gtk.StringList();
-        modeModel.append('Tam Metin');
-        modeModel.append('Sadece İkon');
-        modeModel.append('Kompakt');
+        for (const label of DISPLAY_MODES.labels) {
+            modeModel.append(label);
+        }
         modeRow.model = modeModel;
 
-        const modeMap = { 'text': 0, 'icon': 1, 'compact': 2 };
-        const reverseModeMap = ['text', 'icon', 'compact'];
+        modeRow.selected = getIndexFromValue(DISPLAY_MODES, this._settings.get_string('display-mode'));
 
-        modeRow.selected = modeMap[this._settings.get_string('display-mode')] || 0;
-
-        modeRow.connect('notify::selected', () => {
-            this._settings.set_string('display-mode', reverseModeMap[modeRow.selected]);
+        const modeHandlerId = modeRow.connect('notify::selected', () => {
+            this._settings.set_string('display-mode', getValueFromIndex(DISPLAY_MODES, modeRow.selected));
         });
+        this._signalHandlers.push({ widget: modeRow, handlerId: modeHandlerId });
 
         appearanceGroup.add(modeRow);
 
@@ -367,19 +404,17 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
 
         const positionModel = new Gtk.StringList();
-        positionModel.append('Sol');
-        positionModel.append('Orta');
-        positionModel.append('Sağ');
+        for (const label of PANEL_POSITIONS.labels) {
+            positionModel.append(label);
+        }
         positionRow.model = positionModel;
 
-        const positionMap = { 'left': 0, 'center': 1, 'right': 2 };
-        const reversePositionMap = ['left', 'center', 'right'];
+        positionRow.selected = getIndexFromValue(PANEL_POSITIONS, this._settings.get_string('panel-position'));
 
-        positionRow.selected = positionMap[this._settings.get_string('panel-position')] || 2;
-
-        positionRow.connect('notify::selected', () => {
-            this._settings.set_string('panel-position', reversePositionMap[positionRow.selected]);
+        const positionHandlerId = positionRow.connect('notify::selected', () => {
+            this._settings.set_string('panel-position', getValueFromIndex(PANEL_POSITIONS, positionRow.selected));
         });
+        this._signalHandlers.push({ widget: positionRow, handlerId: positionHandlerId });
 
         positionGroup.add(positionRow);
     }
@@ -417,7 +452,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
         headerBox.append(subtitleLabel);
 
         const versionLabel = new Gtk.Label({
-            label: 'Sürüm 0.2.0',
+            label: 'Sürüm 0.2.1',
             css_classes: ['dim-label'],
         });
         headerBox.append(versionLabel);
@@ -454,12 +489,13 @@ export default class PraytimePreferences extends ExtensionPreferences {
         githubRow.add_suffix(new Gtk.Image({
             icon_name: 'external-link-symbolic',
         }));
-        githubRow.connect('activated', () => {
+        const githubHandlerId = githubRow.connect('activated', () => {
             Gio.AppInfo.launch_default_for_uri(
                 'https://github.com/erhanurgun/LINUX-ubuntu-gnome-praytime-extension',
                 null
             );
         });
+        this._signalHandlers.push({ widget: githubRow, handlerId: githubHandlerId });
         linksGroup.add(githubRow);
 
         const issueRow = new Adw.ActionRow({
@@ -470,12 +506,13 @@ export default class PraytimePreferences extends ExtensionPreferences {
         issueRow.add_suffix(new Gtk.Image({
             icon_name: 'external-link-symbolic',
         }));
-        issueRow.connect('activated', () => {
+        const issueHandlerId = issueRow.connect('activated', () => {
             Gio.AppInfo.launch_default_for_uri(
                 'https://github.com/erhanurgun/LINUX-ubuntu-gnome-praytime-extension/issues',
                 null
             );
         });
+        this._signalHandlers.push({ widget: issueRow, handlerId: issueHandlerId });
         linksGroup.add(issueRow);
     }
 }

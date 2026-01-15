@@ -1,4 +1,5 @@
 import { PrayerTime } from './PrayerTime.js';
+import { PRAYER_NAMES } from '../../config/constants.js';
 
 // Günlük namaz vakitlerini yöneten model
 export class PrayerSchedule {
@@ -17,17 +18,10 @@ export class PrayerSchedule {
 
     // API verisinden schedule oluştur
     static fromApiResponse(data, date = new Date()) {
-        const prayerMap = [
-            { name: 'İmsak', nameEn: 'Imsak', key: 'İmsak' },
-            { name: 'Güneş', nameEn: 'Sunrise', key: 'Güneş' },
-            { name: 'Öğle', nameEn: 'Dhuhr', key: 'Öğle' },
-            { name: 'İkindi', nameEn: 'Asr', key: 'İkindi' },
-            { name: 'Akşam', nameEn: 'Maghrib', key: 'Akşam' },
-            { name: 'Yatsı', nameEn: 'Isha', key: 'Yatsı' },
-        ];
-
-        const prayers = prayerMap.map(p => {
-            const timeStr = data[p.key];
+        // PRAYER_NAMES sabitini kullan - key olarak Türkçe isim kullanılıyor
+        // çünkü API client'tan gelen data Türkçe key'ler içeriyor
+        const prayers = PRAYER_NAMES.map(p => {
+            const timeStr = data[p.name];
             if (!timeStr) return null;
 
             const [hours, minutes] = timeStr.split(':').map(Number);

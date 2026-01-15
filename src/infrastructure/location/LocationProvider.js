@@ -6,8 +6,8 @@ export class LocationProvider {
         this._settings = settings;
     }
 
-    // Mevcut konumu al
-    async getLocation() {
+    // Mevcut konumu al - senkron, I/O yok
+    getLocation() {
         const locationId = this._settings.get_int('location-id');
         const cityName = this._settings.get_string('city-name');
         const regionName = this._settings.get_string('region-name');

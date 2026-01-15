@@ -10,42 +10,36 @@ export class NotificationManager {
         this._source = null;
     }
 
-    // Bildirim goster
+    // Normal bildirim
     show(title, body) {
-        this._ensureSource();
-
-        // Ses ayarını kontrol et
-        if (this._settings.get_boolean('notification-sound')) {
-            this._playSound();
-        }
-
-        const notification = new MessageTray.Notification({
-            source: this._source,
-            title: title,
-            body: body,
-            isTransient: false,
-        });
-
-        this._source.addNotification(notification);
+        this._showNotification(title, body, null);
     }
 
     // Acil bildirim
     showUrgent(title, body) {
+        this._showNotification(title, body, MessageTray.Urgency.CRITICAL);
+    }
+
+    // Ortak bildirim metodu - DRY prensibi
+    _showNotification(title, body, urgency) {
         this._ensureSource();
 
-        // Ses ayarını kontrol et
         if (this._settings.get_boolean('notification-sound')) {
             this._playSound();
         }
 
-        const notification = new MessageTray.Notification({
+        const notificationOptions = {
             source: this._source,
             title: title,
             body: body,
             isTransient: false,
-            urgency: MessageTray.Urgency.CRITICAL,
-        });
+        };
 
+        if (urgency !== null) {
+            notificationOptions.urgency = urgency;
+        }
+
+        const notification = new MessageTray.Notification(notificationOptions);
         this._source.addNotification(notification);
     }
 

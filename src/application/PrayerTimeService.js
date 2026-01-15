@@ -63,8 +63,8 @@ export class PrayerTimeService {
 
     // Vakitleri yenile
     async _refreshPrayerTimes() {
-        // Konum al
-        this._location = await this._locationProvider.getLocation();
+        // Konum al - senkron çağrı
+        this._location = this._locationProvider.getLocation();
 
         if (!this._location || !this._location.isValid()) {
             throw new Error('Geçersiz konum');
@@ -91,6 +91,11 @@ export class PrayerTimeService {
             GLib.PRIORITY_DEFAULT,
             1,
             () => {
+                // Servis durmuş mu kontrol et
+                if (!this._isRunning) {
+                    return GLib.SOURCE_REMOVE;
+                }
+
                 this._triggerUpdate();
 
                 // Sonraki vakit yoksa (gün bitti) yenile
@@ -116,6 +121,10 @@ export class PrayerTimeService {
             GLib.PRIORITY_DEFAULT,
             secondsUntilMidnight,
             () => {
+                // Servis durmuş mu kontrol et
+                if (!this._isRunning) {
+                    return GLib.SOURCE_REMOVE;
+                }
                 this._refreshPrayerTimes().catch(console.error);
                 this._scheduleDailyRefresh();
                 return GLib.SOURCE_REMOVE;

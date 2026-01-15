@@ -1,16 +1,16 @@
 import Soup from 'gi://Soup';
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
-
-const API_BASE_URL = 'https://prayertimes.api.abdus.dev';
+import { API_BASE_URL, PRAYER_NAMES } from '../../config/constants.js';
 
 // Diyanet namaz vakitleri API istemcisi
 export class PrayerTimesApiClient {
     constructor() {
         this._session = new Soup.Session({
-            user_agent: 'praytime@erho.dev/0.2.0',
+            user_agent: 'praytime@erho.dev/0.2.1',
             timeout: 30,
         });
+        this._cancellable = null;
     }
 
     // location_id ile namaz vakitlerini al
@@ -32,29 +32,20 @@ export class PrayerTimesApiClient {
         }
     }
 
-    // Şehir araması yap
-    async searchCity(query) {
-        const url = `${API_BASE_URL}/api/diyanet/search?q=${encodeURIComponent(query)}`;
-
-        try {
-            const data = await this._fetchJson(url);
-            return data || [];
-        } catch (error) {
-            console.error(`[Praytime] Şehir arama hatası: ${error.message}`);
-            return [];
-        }
-    }
-
     // JSON veri çek
     _fetchJson(url) {
         return new Promise((resolve, reject) => {
             const message = Soup.Message.new('GET', url);
-            const cancellable = new Gio.Cancellable();
+            // Önceki isteği iptal et
+            if (this._cancellable) {
+                this._cancellable.cancel();
+            }
+            this._cancellable = new Gio.Cancellable();
 
             this._session.send_and_read_async(
                 message,
                 GLib.PRIORITY_DEFAULT,
-                cancellable,
+                this._cancellable,
                 (session, result) => {
                     try {
                         const bytes = session.send_and_read_finish(result);
@@ -103,15 +94,12 @@ export class PrayerTimesApiClient {
     // API kaydını domain formatına dönüştür
     _transformEntry(entry) {
         const timeRegex = /^\d{2}:\d{2}$/;
+        const result = {};
 
-        const result = {
-            İmsak: entry.fajr,
-            Güneş: entry.sun,
-            Öğle: entry.dhuhr,
-            İkindi: entry.asr,
-            Akşam: entry.maghrib,
-            Yatsı: entry.isha,
-        };
+        // PRAYER_NAMES sabitinden dinamik olarak oluştur
+        for (const prayer of PRAYER_NAMES) {
+            result[prayer.name] = entry[prayer.apiKey];
+        }
 
         // Validasyon
         for (const [key, value] of Object.entries(result)) {
@@ -124,6 +112,11 @@ export class PrayerTimesApiClient {
     }
 
     destroy() {
+        // Aktif istekleri iptal et
+        if (this._cancellable) {
+            this._cancellable.cancel();
+            this._cancellable = null;
+        }
         this._session = null;
     }
 }
