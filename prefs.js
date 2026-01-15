@@ -131,11 +131,12 @@ export default class PraytimePreferences extends ExtensionPreferences {
 
         const url = `${API_BASE_URL}/api/diyanet/search?q=${encodeURIComponent(query)}`;
         const message = Soup.Message.new('GET', url);
+        const cancellable = new Gio.Cancellable();
 
         this._session.send_and_read_async(
             message,
             GLib.PRIORITY_DEFAULT,
-            null,
+            cancellable,
             (session, result) => {
                 try {
                     const bytes = session.send_and_read_finish(result);

@@ -1,5 +1,6 @@
 import Soup from 'gi://Soup';
 import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
 
 const API_BASE_URL = 'https://prayertimes.api.abdus.dev';
 
@@ -48,11 +49,12 @@ export class PrayerTimesApiClient {
     _fetchJson(url) {
         return new Promise((resolve, reject) => {
             const message = Soup.Message.new('GET', url);
+            const cancellable = new Gio.Cancellable();
 
             this._session.send_and_read_async(
                 message,
                 GLib.PRIORITY_DEFAULT,
-                null,
+                cancellable,
                 (session, result) => {
                     try {
                         const bytes = session.send_and_read_finish(result);
