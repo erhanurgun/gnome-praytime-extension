@@ -3,7 +3,7 @@ import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
 import Soup from 'gi://Soup';
 import GLib from 'gi://GLib';
-import { ExtensionPreferences } from 'resource:///org/gnome/shell/extensions/prefs.js';
+import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import { API_BASE_URL, DISPLAY_MODES, PANEL_POSITIONS, getIndexFromValue, getValueFromIndex } from './src/config/constants.js';
 
 // Tercihler penceresi
@@ -452,7 +452,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
         headerBox.append(subtitleLabel);
 
         const versionLabel = new Gtk.Label({
-            label: 'Sürüm 0.2.1',
+            label: 'Sürüm 0.2.3',
             css_classes: ['dim-label'],
         });
         headerBox.append(versionLabel);
@@ -465,7 +465,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
 
         const developerRow = new Adw.ActionRow({
             title: 'Geliştirici',
-            subtitle: 'erho.dev',
+            subtitle: '@erhanurgun - Erhan ÜRGÜN',
         });
         infoGroup.add(developerRow);
 
@@ -514,5 +514,22 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         this._signalHandlers.push({ widget: issueRow, handlerId: issueHandlerId });
         linksGroup.add(issueRow);
+
+        const allLinksRow = new Adw.ActionRow({
+            title: 'Tüm Bağlantılar',
+            subtitle: 'erho.me',
+            activatable: true,
+        });
+        allLinksRow.add_suffix(new Gtk.Image({
+            icon_name: 'external-link-symbolic',
+        }));
+        const allLinksHandlerId = allLinksRow.connect('activated', () => {
+            Gio.AppInfo.launch_default_for_uri(
+                'https://erho.me',
+                null
+            );
+        });
+        this._signalHandlers.push({ widget: allLinksRow, handlerId: allLinksHandlerId });
+        linksGroup.add(allLinksRow);
     }
 }

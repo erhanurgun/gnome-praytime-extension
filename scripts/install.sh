@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Degiskenler
+# Değişkenler
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 EXTENSION_UUID="praytime@erho.dev"
@@ -26,22 +26,22 @@ echo ""
 # Mevcut kurulumu kontrol et
 if [ -d "$TARGET_DIR" ]; then
     echo -e "${YELLOW}[!] Mevcut kurulum tespit edildi${NC}"
-    echo -e "${YELLOW}    Onceki kurulum kaldirilacak...${NC}"
+    echo -e "${YELLOW}    Önceki kurulum kaldırılacak...${NC}"
 
-    # Uzantiyi devre disi birak
+    # Uzantıyı devre dışı bırak
     gnome-extensions disable "$EXTENSION_UUID" 2>/dev/null || true
 
-    # Eski dosyalari sil
+    # Eski dosyaları sil
     rm -rf "$TARGET_DIR"
-    echo -e "${GREEN}[OK] Eski kurulum kaldirildi${NC}"
+    echo -e "${GREEN}[OK] Eski kurulum kaldırıldı${NC}"
 fi
 
-# Hedef dizini olustur
-echo -e "${BLUE}[*] Hedef dizin olusturuluyor...${NC}"
+# Hedef dizini oluştur
+echo -e "${BLUE}[*] Hedef dizin oluşturuluyor...${NC}"
 mkdir -p "$TARGET_DIR"
 
-# Dosyalari kopyala (scripts ve git haric)
-echo -e "${BLUE}[*] Dosyalar kopyalaniyor...${NC}"
+# Dosyaları kopyala (scripts ve git hariç)
+echo -e "${BLUE}[*] Dosyalar kopyalanıyor...${NC}"
 cd "$PROJECT_DIR"
 
 # Kopyalanacak dosya ve dizinler
@@ -53,30 +53,30 @@ cp -r schemas "$TARGET_DIR/"
 cp -r src "$TARGET_DIR/"
 cp -r icons "$TARGET_DIR/"
 
-echo -e "${GREEN}[OK] Dosyalar kopyalandi${NC}"
+echo -e "${GREEN}[OK] Dosyalar kopyalandı${NC}"
 
 # Schema derle
 echo -e "${BLUE}[*] Schema derleniyor...${NC}"
 glib-compile-schemas "$TARGET_DIR/schemas/"
 echo -e "${GREEN}[OK] Schema derlendi${NC}"
 
-# Uzantiyi etkinlestir
-echo -e "${BLUE}[*] Uzanti etkinlestiriliyor...${NC}"
+# Uzantıyı etkinleştir
+echo -e "${BLUE}[*] Uzantı etkinleştiriliyor...${NC}"
 gnome-extensions enable "$EXTENSION_UUID" 2>/dev/null || {
-    echo -e "${YELLOW}[!] Uzanti etkinlestirilemedi${NC}"
-    echo -e "${YELLOW}    GNOME Shell'i yeniden baslatin:${NC}"
+    echo -e "${YELLOW}[!] Uzantı etkinleştirilemedi${NC}"
+    echo -e "${YELLOW}    GNOME Shell'i yeniden başlatın:${NC}"
     echo -e "${YELLOW}    - X11: Alt+F2 > r > Enter${NC}"
-    echo -e "${YELLOW}    - Wayland: Oturumu kapat/ac${NC}"
+    echo -e "${YELLOW}    - Wayland: Oturumu kapat/aç${NC}"
 }
 
 echo ""
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  Kurulum Tamamlandi!${NC}"
+echo -e "${GREEN}  Kurulum Tamamlandı!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "Uzanti konumu: ${BLUE}$TARGET_DIR${NC}"
+echo -e "Uzantı konumu: ${BLUE}$TARGET_DIR${NC}"
 echo ""
-echo -e "Faydali komutlar:"
-echo -e "  ${YELLOW}gnome-extensions show $EXTENSION_UUID${NC}  - Durum goster"
+echo -e "Faydalı komutlar:"
+echo -e "  ${YELLOW}gnome-extensions show $EXTENSION_UUID${NC}  - Durum göster"
 echo -e "  ${YELLOW}gnome-extensions prefs $EXTENSION_UUID${NC} - Ayarlar"
 echo ""

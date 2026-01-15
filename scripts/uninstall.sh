@@ -1,6 +1,6 @@
 #!/bin/bash
-# Praytime GNOME Extension - Kaldirma Scripti
-# Uzantiyi ve ayarlarini tamamen kaldirir
+# Praytime GNOME Extension - Kaldırma Scripti
+# Uzantıyı ve ayarlarını tamamen kaldırır
 
 set -e
 
@@ -11,48 +11,48 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Degiskenler
+# Değişkenler
 EXTENSION_UUID="praytime@erho.dev"
 EXTENSIONS_DIR="$HOME/.local/share/gnome-shell/extensions"
 TARGET_DIR="$EXTENSIONS_DIR/$EXTENSION_UUID"
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  Praytime Extension Kaldirma${NC}"
+echo -e "${BLUE}  Praytime Extension Kaldırma${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Kurulum kontrolu
+# Kurulum kontrolü
 if [ ! -d "$TARGET_DIR" ]; then
-    echo -e "${YELLOW}[!] Uzanti kurulu degil${NC}"
+    echo -e "${YELLOW}[!] Uzantı kurulu değil${NC}"
     echo -e "${YELLOW}    Konum: $TARGET_DIR${NC}"
     exit 0
 fi
 
-# Uzantiyi devre disi birak
-echo -e "${BLUE}[*] Uzanti devre disi birakiliyor...${NC}"
+# Uzantıyı devre dışı bırak
+echo -e "${BLUE}[*] Uzantı devre dışı bırakılıyor...${NC}"
 gnome-extensions disable "$EXTENSION_UUID" 2>/dev/null || true
-echo -e "${GREEN}[OK] Uzanti devre disi birakildi${NC}"
+echo -e "${GREEN}[OK] Uzantı devre dışı bırakıldı${NC}"
 
-# Dosyalari sil
+# Dosyaları sil
 echo -e "${BLUE}[*] Dosyalar siliniyor...${NC}"
 rm -rf "$TARGET_DIR"
 echo -e "${GREEN}[OK] Dosyalar silindi${NC}"
 
-# Ayarlari sifirla (opsiyonel)
+# Ayarları sıfırla (opsiyonel)
 read -p "$(echo -e ${YELLOW}[?] Ayarlar da silinsin mi? [e/H]: ${NC})" -n 1 -r
 echo ""
 if [[ $REPLY =~ ^[Ee]$ ]]; then
-    echo -e "${BLUE}[*] Ayarlar sifirlaniyor...${NC}"
+    echo -e "${BLUE}[*] Ayarlar sıfırlanıyor...${NC}"
     dconf reset -f /org/gnome/shell/extensions/praytime/ 2>/dev/null || true
-    echo -e "${GREEN}[OK] Ayarlar sifirlandi${NC}"
+    echo -e "${GREEN}[OK] Ayarlar sıfırlandı${NC}"
 fi
 
 echo ""
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  Kaldirma Tamamlandi!${NC}"
+echo -e "${GREEN}  Kaldırma Tamamlandı!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "${YELLOW}Not: GNOME Shell'i yeniden baslatmaniz gerekebilir${NC}"
+echo -e "${YELLOW}Not: GNOME Shell'i yeniden başlatmanız gerekebilir${NC}"
 echo -e "  - X11: Alt+F2 > r > Enter"
-echo -e "  - Wayland: Oturumu kapat/ac"
+echo -e "  - Wayland: Oturumu kapat/aç"
 echo ""

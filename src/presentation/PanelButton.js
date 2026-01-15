@@ -78,7 +78,7 @@ class PanelButton extends PanelMenu.Button {
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         // Sürüm ve geliştirici bilgisi
-        const versionItem = new PopupMenu.PopupMenuItem('v0.2.2 | @erhanurgun - www.erho.dev', {
+        const versionItem = new PopupMenu.PopupMenuItem('v0.2.3 | @erhanurgun', {
             style_class: 'praytime-version',
         });
         this._versionItem = versionItem;

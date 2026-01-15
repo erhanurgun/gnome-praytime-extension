@@ -2,6 +2,21 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.2.3] - 2026-01-15
+
+### Düzeltildi
+- GNOME 46 prefs.js import path hatası düzeltildi
+- Shell script dosyalarındaki Türkçe karakterler UTF-8'e çevrildi
+
+### Değişti
+- Panel menüsü sürüm formatı sadeleştirildi ("v0.2.3 | @erhanurgun")
+- Hakkında sayfasında geliştirici bilgisi güncellendi ("@erhanurgun - Erhan ÜRGÜN")
+- Bağlantılar kısmına "Tüm Bağlantılar" (erho.me) eklendi
+
+### Teknik
+- prefs.js import path: `resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js`
+- 6 shell script dosyasında Türkçe karakter düzeltmeleri (install, build, dev, uninstall, clean, logs)
+
 ## [0.2.2] - 2026-01-15
 
 ### Değişti
