@@ -70,11 +70,8 @@ export class PrayerTimeService {
             throw new Error('Geçersiz konum');
         }
 
-        // API'den vakitleri çek
-        const apiData = await this._apiClient.fetchPrayerTimes(
-            this._location.latitude,
-            this._location.longitude
-        );
+        // API'den vakitleri çek (location_id ile)
+        const apiData = await this._apiClient.fetchPrayerTimes(this._location.id);
 
         // Schedule oluştur
         this._schedule = PrayerSchedule.fromApiResponse(apiData, new Date());

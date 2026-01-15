@@ -1,39 +1,45 @@
 // Konum bilgisini temsil eden model
 export class Location {
-    constructor(latitude, longitude, cityName = null) {
-        this._latitude = latitude;
-        this._longitude = longitude;
+    constructor(id, cityName, regionName = null) {
+        this._id = id;
         this._cityName = cityName;
+        this._regionName = regionName;
     }
 
-    get latitude() {
-        return this._latitude;
-    }
-
-    get longitude() {
-        return this._longitude;
+    get id() {
+        return this._id;
     }
 
     get cityName() {
         return this._cityName;
     }
 
-    // İstanbul varsayılan konum
+    get regionName() {
+        return this._regionName;
+    }
+
+    // Ağrı varsayılan konum
     static getDefault() {
-        return new Location(41.0082, 28.9784, 'İstanbul');
+        return new Location(9185, 'Ağrı', 'Ağrı');
     }
 
     // Geçerli konum mu
     isValid() {
         return (
-            typeof this._latitude === 'number' &&
-            typeof this._longitude === 'number' &&
-            this._latitude >= -90 && this._latitude <= 90 &&
-            this._longitude >= -180 && this._longitude <= 180
+            typeof this._id === 'number' &&
+            this._id > 0
         );
     }
 
+    // API yanıtından oluştur
+    static fromApiResponse(data) {
+        return new Location(data.id, data.city, data.region || data.city);
+    }
+
     toString() {
-        return `${this._cityName || 'Konum'} (${this._latitude.toFixed(4)}, ${this._longitude.toFixed(4)})`;
+        if (this._regionName && this._regionName !== this._cityName) {
+            return `${this._cityName}/${this._regionName}`;
+        }
+        return this._cityName || 'Bilinmeyen Konum';
     }
 }

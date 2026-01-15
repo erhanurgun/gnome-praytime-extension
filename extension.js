@@ -87,7 +87,7 @@ export default class PraytimeExtension extends Extension {
     // Ayar değişikliği
     async _onSettingsChanged(key) {
         // Konum değiştiğinde servisi yeniden başlat
-        if (['use-manual-location', 'latitude', 'longitude'].includes(key)) {
+        if (['location-id', 'city-name', 'region-name'].includes(key)) {
             this._service.stop();
             try {
                 await this._service.start();

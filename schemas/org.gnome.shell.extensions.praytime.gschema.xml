@@ -3,28 +3,22 @@
   <schema id="org.gnome.shell.extensions.praytime" path="/org/gnome/shell/extensions/praytime/">
 
     <!-- Konum Ayarları -->
-    <key name="use-manual-location" type="b">
-      <default>false</default>
-      <summary>Manuel konum kullan</summary>
-      <description>Otomatik konum yerine manuel girilen koordinatları kullan</description>
-    </key>
-
-    <key name="latitude" type="d">
-      <default>41.0082</default>
-      <summary>Enlem</summary>
-      <description>Manuel konum enlemi (varsayılan: İstanbul)</description>
-    </key>
-
-    <key name="longitude" type="d">
-      <default>28.9784</default>
-      <summary>Boylam</summary>
-      <description>Manuel konum boylamı (varsayılan: İstanbul)</description>
+    <key name="location-id" type="i">
+      <default>9185</default>
+      <summary>Konum ID</summary>
+      <description>Diyanet API konum kimliği (varsayılan: Ağrı = 9185)</description>
     </key>
 
     <key name="city-name" type="s">
-      <default>'İstanbul'</default>
+      <default>'Ağrı'</default>
       <summary>Şehir adı</summary>
       <description>Gösterilecek şehir adı</description>
+    </key>
+
+    <key name="region-name" type="s">
+      <default>'Ağrı'</default>
+      <summary>İlçe adı</summary>
+      <description>Gösterilecek ilçe adı</description>
     </key>
 
     <!-- Bildirim Ayarları -->

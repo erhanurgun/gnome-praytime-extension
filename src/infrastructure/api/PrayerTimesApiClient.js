@@ -12,18 +12,19 @@ export class PrayerTimesApiClient {
         });
     }
 
-    // Koordinatlara göre namaz vakitlerini al
-    async fetchPrayerTimes(latitude, longitude) {
-        const url = `${API_BASE_URL}/api/diyanet/prayertimes?latitude=${latitude}&longitude=${longitude}`;
+    // location_id ile namaz vakitlerini al
+    async fetchPrayerTimes(locationId) {
+        const url = `${API_BASE_URL}/api/diyanet/prayertimes?location_id=${locationId}`;
 
         try {
             const data = await this._fetchJson(url);
 
-            if (!data || !data.times) {
+            if (!data || !Array.isArray(data) || data.length === 0) {
                 throw new Error('API yanıtı geçersiz format');
             }
 
-            return this._transformResponse(data);
+            // Bugünün vakitlerini bul
+            return this._getTodayPrayerTimes(data);
         } catch (error) {
             console.error(`[Praytime] API hatası: ${error.message}`);
             throw error;
@@ -36,7 +37,7 @@ export class PrayerTimesApiClient {
 
         try {
             const data = await this._fetchJson(url);
-            return data.results || [];
+            return data || [];
         } catch (error) {
             console.error(`[Praytime] Şehir arama hatası: ${error.message}`);
             return [];
@@ -73,18 +74,41 @@ export class PrayerTimesApiClient {
         });
     }
 
-    // API yanıtını domain formatına dönüştür
-    _transformResponse(data) {
-        const times = data.times;
+    // Bugünün namaz vakitlerini API yanıtından çıkar
+    _getTodayPrayerTimes(data) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Bugünün tarihine uyan kaydı bul
+        for (const entry of data) {
+            const entryDate = new Date(entry.date);
+            entryDate.setHours(0, 0, 0, 0);
+
+            if (entryDate.getTime() === today.getTime()) {
+                return this._transformEntry(entry);
+            }
+        }
+
+        // Bugün bulunamazsa ilk kaydı kullan
+        if (data.length > 0) {
+            console.warn('[Praytime] Bugünün vakitleri bulunamadı, ilk kayıt kullanılıyor');
+            return this._transformEntry(data[0]);
+        }
+
+        throw new Error('API yanıtında namaz vakti bulunamadı');
+    }
+
+    // API kaydını domain formatına dönüştür
+    _transformEntry(entry) {
         const timeRegex = /^\d{2}:\d{2}$/;
 
         const result = {
-            İmsak: times.fajr || times.Fajr || times.imsak || null,
-            Güneş: times.sunrise || times.Sunrise || times.gunes || null,
-            Öğle: times.dhuhr || times.Dhuhr || times.ogle || null,
-            İkindi: times.asr || times.Asr || times.ikindi || null,
-            Akşam: times.maghrib || times.Maghrib || times.aksam || null,
-            Yatsı: times.isha || times.Isha || times.yatsi || null,
+            İmsak: entry.fajr,
+            Güneş: entry.sun,
+            Öğle: entry.dhuhr,
+            İkindi: entry.asr,
+            Akşam: entry.maghrib,
+            Yatsı: entry.isha,
         };
 
         // Validasyon
