@@ -2,6 +2,23 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.5.2] - 2026-01-16
+
+### Duzeltildi
+- "Sadece Ikon" gorunum modunda ikon artik gorunuyor
+- Panel ikonu tum gorunum modlarinda dogru calisıyor
+
+### Eklendi
+- St.Icon destegi ile cami ikonu panele eklendi
+- Gio import'u ile dosya sisteminden ikon yukleme
+
+### Teknik
+- PanelButton._buildPanel(): St.Icon olusturma ve Gio.icon_new_for_string() ile SVG yukleme
+- PanelButton._updatePanelLabel(): Gorunum moduna gore ikon/label gorunurluk yonetimi
+  - icon modu: sadece ikon goster
+  - compact modu: ikon + metin goster
+  - text modu: sadece metin goster
+
 ## [0.5.1] - 2026-01-16
 
 ### Duzeltildi

@@ -1,5 +1,6 @@
 import GObject from 'gi://GObject';
 import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -25,12 +26,22 @@ class PanelButton extends PanelMenu.Button {
             style_class: 'panel-status-menu-box praytime-panel-box',
         });
 
+        // İkon oluştur
+        const iconPath = `${this._extension.path}/icons/mosque-symbolic.svg`;
+        const gicon = Gio.icon_new_for_string(iconPath);
+        this._icon = new St.Icon({
+            gicon: gicon,
+            style_class: 'system-status-icon praytime-icon',
+            icon_size: 16,
+        });
+
         this._label = new St.Label({
             text: 'Yükleniyor...',
             y_align: Clutter.ActorAlign.CENTER,
             style_class: 'praytime-label',
         });
 
+        box.add_child(this._icon);
         box.add_child(this._label);
         this.add_child(box);
     }
@@ -113,18 +124,31 @@ class PanelButton extends PanelMenu.Button {
     _updatePanelLabel(nextPrayer, options) {
         if (!nextPrayer) {
             this._label.set_text('--:--');
+            this._icon.hide();
+            this._label.show();
             return;
         }
 
         const { mode, showName, showTime, showCountdown, thresholdMinutes } = options;
 
-        // 'icon' modu - sadece ikon göster
+        // 'icon' modu - sadece ikon göster, metin gizle
         if (mode === 'icon') {
-            this._label.set_text('');
+            this._icon.show();
+            this._label.hide();
             return;
         }
 
-        // 'compact' veya 'text' modu - ayarlara göre metin oluştur
+        // 'compact' modu - ikon + metin
+        if (mode === 'compact') {
+            this._icon.show();
+            this._label.show();
+        } else {
+            // 'text' modu - sadece metin
+            this._icon.hide();
+            this._label.show();
+        }
+
+        // Metin oluşturma - 'compact' veya 'text' modu için
         const parts = [];
 
         if (showName) {
