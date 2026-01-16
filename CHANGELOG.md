@@ -2,6 +2,23 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.5.1] - 2026-01-16
+
+### Duzeltildi
+- Ayarlar panelinden yapilan degisiklikler artik aninda etkili oluyor
+- display-mode, show-prayer-name, show-prayer-time ayarlari artik PanelButton'da kullaniliyor
+- Bildirim ayarlari (notifications-enabled, notify-before-minutes, notify-on-time) degistiginde bildirimler yeniden zamanlaniyor
+
+### Eklendi
+- extension.js: Bildirim ayar handler'lari (_rescheduleNotifications metodu)
+- PrayerTimeService.js: rescheduleNotifications() metodu
+
+### Teknik
+- PanelButton._updatePanelLabel artik display-mode'a gore davranir (icon/text/compact)
+- PanelButton.update artik tum gorunum ayarlarini (showName, showTime, showCountdown) okuyor
+- extension.js _handleSettingChange handler'larina notifications-enabled, notify-before-minutes, notify-on-time eklendi
+- Ayar degisiklik propagasyonu duzeltildi - settings change signal'lari dogru handler'lara yonlendiriliyor
+
 ## [0.5.0] - 2026-01-16
 
 ### Eklendi

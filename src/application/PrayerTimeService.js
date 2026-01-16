@@ -35,6 +35,16 @@ export class PrayerTimeService {
         return this._schedule?.getNextPrayer() ?? null;
     }
 
+    rescheduleNotifications() {
+        if (!this._schedule) return;
+
+        this._notificationScheduler.scheduleForPrayers(
+            this._schedule.prayers,
+            (title, body) => this._onNotification?.(title, body)
+        );
+        console.log('[Praytime] Bildirimler yeniden zamanlandı');
+    }
+
     async start() {
         this._isRunning = true;
         try {

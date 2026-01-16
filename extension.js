@@ -73,18 +73,28 @@ export default class PraytimeExtension extends Extension {
         if (!this._isEnabled) return;
 
         const handlers = {
+            // Görünüm ayarları
             'panel-position': () => this._repositionPanel(),
             'display-mode': () => this._onUpdate(),
             'show-prayer-name': () => this._onUpdate(),
             'show-prayer-time': () => this._onUpdate(),
             'show-countdown': () => this._onUpdate(),
             'countdown-threshold-minutes': () => this._onUpdate(),
+            // Konum ayarları
             'location-id': () => this._restartService(),
             'city-name': () => this._restartService(),
             'region-name': () => this._restartService(),
+            // Bildirim ayarları
+            'notifications-enabled': () => this._rescheduleNotifications(),
+            'notify-before-minutes': () => this._rescheduleNotifications(),
+            'notify-on-time': () => this._rescheduleNotifications(),
         };
 
         handlers[key]?.();
+    }
+
+    _rescheduleNotifications() {
+        this._service?.rescheduleNotifications();
     }
 
     async _restartService() {

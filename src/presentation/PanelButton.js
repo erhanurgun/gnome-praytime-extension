@@ -97,22 +97,52 @@ class PanelButton extends PanelMenu.Button {
         }
 
         const settings = this._extension.getSettings();
-        const showCountdown = settings.get_boolean('show-countdown');
-        const thresholdMinutes = settings.get_int('countdown-threshold-minutes');
+        const displayOptions = {
+            mode: settings.get_string('display-mode'),
+            showName: settings.get_boolean('show-prayer-name'),
+            showTime: settings.get_boolean('show-prayer-time'),
+            showCountdown: settings.get_boolean('show-countdown'),
+            thresholdMinutes: settings.get_int('countdown-threshold-minutes'),
+        };
 
-        this._updatePanelLabel(nextPrayer, showCountdown, thresholdMinutes);
+        this._updatePanelLabel(nextPrayer, displayOptions);
         this._updateLocation(location);
         this._updatePrayerList(schedule, nextPrayer);
     }
 
-    _updatePanelLabel(nextPrayer, showCountdown, thresholdMinutes) {
+    _updatePanelLabel(nextPrayer, options) {
         if (!nextPrayer) {
             this._label.set_text('--:--');
             return;
         }
 
-        let labelText = `${nextPrayer.name} ${nextPrayer.timeString}`;
+        const { mode, showName, showTime, showCountdown, thresholdMinutes } = options;
 
+        // 'icon' modu - sadece ikon göster
+        if (mode === 'icon') {
+            this._label.set_text('');
+            return;
+        }
+
+        // 'compact' veya 'text' modu - ayarlara göre metin oluştur
+        const parts = [];
+
+        if (showName) {
+            parts.push(nextPrayer.name);
+        }
+
+        if (showTime) {
+            parts.push(nextPrayer.timeString);
+        }
+
+        // Eğer hiçbiri aktif değilse en azından saati göster
+        if (parts.length === 0) {
+            parts.push(nextPrayer.timeString);
+        }
+
+        let labelText = parts.join(' ');
+
+        // Geri sayım
         if (showCountdown) {
             const remainingSeconds = nextPrayer.getSecondsUntil();
             const remainingMinutes = Math.floor(remainingSeconds / 60);
