@@ -198,6 +198,53 @@ gnome-extensions enable praytime@erho.dev
 ./scripts/clean.sh
 ```
 
+## Test
+
+Proje kapsamlı birim testleri içerir (189 test, 9 dosya).
+
+### Test Çalıştırma
+
+```bash
+cd tests
+
+# Tüm testleri çalıştır
+./run-tests.sh
+
+# Paralel çalıştır (en hızlı)
+./run-tests.sh -p
+
+# Hızlı mod (sadece özet)
+./run-tests.sh -q
+
+# Tek test çalıştır
+./run-tests.sh PrayerTime
+
+# Kategori testleri
+./run-tests.sh domain
+
+# Watch modu (dosya değişikliklerini izler)
+./run-tests.sh -w
+```
+
+### Test Yapısı
+
+| Kategori | Testler | Açıklama |
+|----------|---------|----------|
+| Domain | PrayerTime, Location, PrayerSchedule, NullHandling, Constants | İş mantığı modelleri |
+| Infrastructure | LocationProvider | Dış sistem entegrasyonları |
+| Application | TimerManager, NotificationScheduler, PrayerTimeService | Servis katmanı |
+
+### Test Script Seçenekleri
+
+| Seçenek | Açıklama |
+|---------|----------|
+| `-p, --parallel` | Paralel çalıştır (en hızlı) |
+| `-q, --quick` | Hızlı mod (sadece özet) |
+| `-w, --watch` | Watch modu |
+| `-v, --verbose` | Detaylı çıktı |
+| `-l, --list` | Test listesi |
+| `-h, --help` | Yardım |
+
 ## Proje Yapısı
 
 ```
@@ -215,6 +262,12 @@ praytime@erho.dev/
 │   ├── clean.sh           # Temizlik
 │   ├── build.sh           # Build
 │   └── logs.sh            # Log görüntüleme
+├── tests/                 # Birim testleri
+│   ├── run-tests.sh       # Test runner
+│   ├── domain/            # Domain testleri
+│   ├── infrastructure/    # Infrastructure testleri
+│   ├── application/       # Application testleri
+│   └── mocks/             # Test mock'ları
 └── src/
     ├── config/            # Sabitler ve yapılandırma
     ├── domain/            # İş mantığı modelleri

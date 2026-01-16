@@ -2,6 +2,32 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.6.2] - 2026-01-16
+
+### Eklendi
+- Gelişmiş test runner scripti (run-tests.sh)
+- Paralel test çalıştırma desteği (-p, --parallel)
+- Watch modu - dosya değişikliklerini izleme (-w, --watch)
+- Hızlı mod - sadece özet çıktı (-q, --quick)
+- Detaylı mod (-v, --verbose)
+- Kategori bazlı test çalıştırma (domain, infrastructure, application)
+- Tek test çalıştırma desteği (./run-tests.sh PrayerTime)
+- Renkli terminal çıktısı ve Unicode semboller
+- LocationProvider.test.js - Infrastructure testleri (24 test)
+- PrayerTimeService.test.js - Entegrasyon testleri (30 test)
+- MockSettings, MockApiClient, MockLocationProvider, MockNotificationScheduler mock sınıfları
+
+### Düzeltildi
+- Constants.test.js versiyon tutarsızlığı düzeltildi (0.4.0 -> 0.6.2)
+- Test runner versiyon uyumsuzluğu giderildi
+
+### Teknik
+- tests/run-tests.sh: Tek gelişmiş test runner (eski test.sh ile birleştirildi)
+- tests/mocks/: MockSettings.js, MockApiClient.js, MockLocationProvider.js, MockNotificationScheduler.js
+- tests/infrastructure/LocationProvider.test.js: Settings injection ve konum yönetimi testleri
+- tests/application/PrayerTimeService.test.js: Servis yaşam döngüsü ve bağımlılık injection testleri
+- Toplam: 9 test dosyası, 189 birim test
+
 ## [0.6.1] - 2026-01-16
 
 ### Değişti
