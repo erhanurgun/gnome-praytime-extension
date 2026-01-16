@@ -2,11 +2,22 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.5.3] - 2026-01-16
+
+### Duzeltildi
+- Panel konumu degisikligi artik aninda uygulanıyor (Top Bar Organizer yaklasimi)
+- Sol konumda panel Activities'ten sonra gorunuyor
+
+### Teknik
+- extension._repositionPanel(): Panel destroy/recreate yerine container tasima yaklasimi
+- container.get_parent().remove_child() ile mevcut box'tan cikarma
+- panelBox.insert_child_at_index(container, -1) ile yeni box'a ekleme
+
 ## [0.5.2] - 2026-01-16
 
 ### Duzeltildi
 - "Sadece Ikon" gorunum modunda ikon artik gorunuyor
-- Panel ikonu tum gorunum modlarinda dogru calisıyor
+- Panel ikonu tum gorunum modlarinda dogru calisiyor
 
 ### Eklendi
 - St.Icon destegi ile cami ikonu panele eklendi

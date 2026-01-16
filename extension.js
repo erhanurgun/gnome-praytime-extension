@@ -1,4 +1,3 @@
-import GLib from 'gi://GLib';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -113,25 +112,23 @@ export default class PraytimeExtension extends Extension {
     _repositionPanel() {
         const newPosition = this._settings.get_string('panel-position');
 
-        if (this._panelButton) {
-            Main.panel.statusArea['praytime-indicator'] = null;
-            this._panelButton.destroy();
-            this._panelButton = null;
+        if (!this._panelButton) return;
+
+        // Panel container'ını al
+        const container = this._panelButton.container;
+        if (!container) return;
+
+        // Mevcut parent box'tan çıkar
+        const parent = container.get_parent();
+        if (parent) {
+            parent.remove_child(container);
         }
 
-        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-            if (!this._isEnabled) return GLib.SOURCE_REMOVE;
+        // Yeni box'a ekle (sona ekle - left'te Activities'ten sonra olur)
+        const panelBox = Main.panel[`_${newPosition}Box`];
+        panelBox.insert_child_at_index(container, -1);
 
-            this._panelButton = this._factory.createPanelButton();
-            Main.panel.addToStatusArea('praytime-indicator', this._panelButton, 0, newPosition);
-
-            if (this._service) {
-                this._panelButton.update(this._service);
-            }
-
-            console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
-            return GLib.SOURCE_REMOVE;
-        });
+        console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
     }
 
     _onUpdate() {
