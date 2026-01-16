@@ -3,7 +3,6 @@ import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import {
-    DISPLAY_MODES,
     PANEL_POSITIONS,
     TURKEY_CITIES,
     getCityIndexById,
@@ -158,18 +157,12 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         page.add(appearanceGroup);
 
-        const modeRow = new Adw.ComboRow({
-            title: 'Görünüm Modu',
-            subtitle: 'Panelde nasıl görünsün',
+        const showIconRow = new Adw.SwitchRow({
+            title: 'İkonu Göster',
+            subtitle: 'Panelde cami ikonu',
         });
-        modeRow.model = this._createDropdownModel(DISPLAY_MODES.labels);
-        modeRow.selected = getIndexFromValue(DISPLAY_MODES, this._settings.get_string('display-mode'));
-
-        this._connectAndTrack(modeRow, 'notify::selected', () => {
-            this._settings.set_string('display-mode', getValueFromIndex(DISPLAY_MODES, modeRow.selected));
-        });
-
-        appearanceGroup.add(modeRow);
+        appearanceGroup.add(showIconRow);
+        this._settings.bind('show-icon', showIconRow, 'active', Gio.SettingsBindFlags.DEFAULT);
 
         const showNameRow = new Adw.SwitchRow({
             title: 'Vakit Adını Göster',
@@ -184,6 +177,33 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         appearanceGroup.add(showTimeRow);
         this._settings.bind('show-prayer-time', showTimeRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+
+        // Görünüm switch referanslarını sakla
+        this._showIconRow = showIconRow;
+        this._showNameRow = showNameRow;
+        this._showTimeRow = showTimeRow;
+
+        // En az bir öğenin görünür olmasını sağlayan kısıtlama
+        const updateSensitivity = () => {
+            const iconActive = this._settings.get_boolean('show-icon');
+            const nameActive = this._settings.get_boolean('show-prayer-name');
+            const timeActive = this._settings.get_boolean('show-prayer-time');
+
+            const activeCount = [iconActive, nameActive, timeActive].filter(Boolean).length;
+
+            // Sadece bir switch açıksa, onu kapatmaya izin verme
+            this._showIconRow.sensitive = !(activeCount === 1 && iconActive);
+            this._showNameRow.sensitive = !(activeCount === 1 && nameActive);
+            this._showTimeRow.sensitive = !(activeCount === 1 && timeActive);
+        };
+
+        // Her switch değiştiğinde kontrol et
+        this._connectAndTrack(showIconRow, 'notify::active', updateSensitivity);
+        this._connectAndTrack(showNameRow, 'notify::active', updateSensitivity);
+        this._connectAndTrack(showTimeRow, 'notify::active', updateSensitivity);
+
+        // Sayfa yüklendiğinde mevcut durumu kontrol et
+        updateSensitivity();
 
         const countdownGroup = new Adw.PreferencesGroup({
             title: 'Geri Sayım',

@@ -52,7 +52,7 @@ export class ServiceFactory {
 
     createNotificationManager() {
         return this._getOrCreate('notificationManager', () =>
-            new NotificationManager(this._settings)
+            new NotificationManager(this._settings, this._extension.path)
         );
     }
 

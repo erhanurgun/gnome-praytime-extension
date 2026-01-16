@@ -1,8 +1,8 @@
 // Uygulama sabitleri - DRY prensibi için merkezi tanımlama
 
 // Merkezi versiyon bilgisi
-export const APP_VERSION = '0.5.4';
-export const APP_VERSION_CODE = 13;
+export const APP_VERSION = '0.6.1';
+export const APP_VERSION_CODE = 16;
 export const APP_NAME = 'praytime@erho.dev';
 export const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 export const APP_DEVELOPER = '@erhanurgun';
@@ -19,12 +19,6 @@ export const PRAYER_NAMES = [
     { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'maghrib' },
     { name: 'Yatsı', nameEn: 'Isha', apiKey: 'isha' },
 ];
-
-// Görünüm modları
-export const DISPLAY_MODES = {
-    values: ['text', 'icon', 'compact'],
-    labels: ['Tam Metin', 'Sadece İkon', 'Kompakt'],
-};
 
 // Panel konumları
 export const PANEL_POSITIONS = {

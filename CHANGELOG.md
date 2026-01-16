@@ -2,6 +2,46 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.6.1] - 2026-01-16
+
+### Değişti
+- "Görünüm Modu" dropdown'ı kaldırıldı, yerine bağımsız toggle'lar eklendi
+- "İkonu Göster" ayarı eklendi (panelde cami ikonu göster/gizle)
+- Artık İkon, Vakit Adı ve Vakit Saati bağımsız olarak açılıp kapatılabilir
+- Kullanıcı deneyimi iyileştirildi (daha esnek görünüm kontrolü)
+
+### Kaldırıldı
+- display-mode GSettings ayarı kaldırıldı
+- DISPLAY_MODES sabiti constants.js'ten kaldırıldı
+- ComboRow görünüm seçici prefs.js'ten kaldırıldı
+
+### Teknik
+- gschema.xml: display-mode yerine show-icon boolean eklendi
+- PanelButton._updatePanelLabel(): mode kontrolü yerine showIcon kullanılıyor
+- prefs.js: ComboRow yerine SwitchRow (İkonu Göster)
+- extension.js: display-mode handler -> show-icon handler
+- Edge case: Tüm görünüm seçenekleri kapalıysa en azından saat gösteriliyor
+
+## [0.5.5] - 2026-01-16
+
+### Düzeltildi
+- Bildirim sesi çalma hatası düzeltildi (paplay bulunamıyordu)
+- PipeWire kullanan sistemlerde ses desteği eklendi (pw-play öncelikli)
+- Proje içi ses dosyası (sounds/sound-01.mp3) artık doğru kullanılıyor
+- sounds klasörü kuruluma dahil edildi
+
+### Eklendi
+- Cascading ses çalar desteği: pw-play > paplay > aplay
+- Extension path NotificationManager'a iletiliyor
+
+### Teknik
+- NotificationManager: extensionPath parametresi eklendi
+- NotificationManager._findSoundPlayer(): Mevcut ses çaları tespit eder ve önbelleğe alır
+- NotificationManager._findSoundFile(): Önce proje içi, sonra sistem seslerini kontrol eder
+- factory.js: createNotificationManager artık extension.path iletir
+- install.sh: sounds klasörü kopyalama eklendi
+- Bildirim gösterimi ses hatasından bağımsız hale getirildi
+
 ## [0.5.4] - 2026-01-16
 
 ### Düzeltildi

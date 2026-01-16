@@ -74,7 +74,7 @@ export default class PraytimeExtension extends Extension {
         const handlers = {
             // Görünüm ayarları
             'panel-position': () => this._repositionPanel(),
-            'display-mode': () => this._onUpdate(),
+            'show-icon': () => this._onUpdate(),
             'show-prayer-name': () => this._onUpdate(),
             'show-prayer-time': () => this._onUpdate(),
             'show-countdown': () => this._onUpdate(),

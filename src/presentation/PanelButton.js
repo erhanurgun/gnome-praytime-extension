@@ -109,7 +109,7 @@ class PanelButton extends PanelMenu.Button {
 
         const settings = this._extension.getSettings();
         const displayOptions = {
-            mode: settings.get_string('display-mode'),
+            showIcon: settings.get_boolean('show-icon'),
             showName: settings.get_boolean('show-prayer-name'),
             showTime: settings.get_boolean('show-prayer-time'),
             showCountdown: settings.get_boolean('show-countdown'),
@@ -129,54 +129,48 @@ class PanelButton extends PanelMenu.Button {
             return;
         }
 
-        const { mode, showName, showTime, showCountdown, thresholdMinutes } = options;
+        const { showIcon, showName, showTime, showCountdown, thresholdMinutes } = options;
 
-        // 'icon' modu - sadece ikon göster, metin gizle
-        if (mode === 'icon') {
+        // İkon görünürlüğü
+        if (showIcon) {
             this._icon.show();
-            this._label.hide();
+        } else {
+            this._icon.hide();
+        }
+
+        // Metin görünürlüğü - en az biri açıksa label göster
+        if (!showName && !showTime && !showCountdown) {
+            // Hiçbiri açık değilse ve ikon da kapalıysa en azından saati göster
+            if (!showIcon) {
+                this._label.set_text(nextPrayer.timeString);
+                this._label.show();
+            } else {
+                this._label.hide();
+            }
             return;
         }
 
-        // 'compact' modu - ikon + metin
-        if (mode === 'compact') {
-            this._icon.show();
-            this._label.show();
-        } else {
-            // 'text' modu - sadece metin
-            this._icon.hide();
-            this._label.show();
-        }
+        this._label.show();
 
-        // Metin oluşturma - 'compact' veya 'text' modu için
+        // Metin oluştur
         const parts = [];
+        if (showName) parts.push(nextPrayer.name);
+        if (showTime) parts.push(nextPrayer.timeString);
 
-        if (showName) {
-            parts.push(nextPrayer.name);
-        }
+        let labelText = parts.join(' ') || '';
 
-        if (showTime) {
-            parts.push(nextPrayer.timeString);
-        }
-
-        // Eğer hiçbiri aktif değilse en azından saati göster
-        if (parts.length === 0) {
-            parts.push(nextPrayer.timeString);
-        }
-
-        let labelText = parts.join(' ');
-
-        // Geri sayım
+        // Geri sayım ekle
         if (showCountdown) {
             const remainingSeconds = nextPrayer.getSecondsUntil();
             const remainingMinutes = Math.floor(remainingSeconds / 60);
 
             if (remainingMinutes <= thresholdMinutes) {
-                labelText += ` (${this._formatCountdown(remainingSeconds)})`;
+                const countdown = this._formatCountdown(remainingSeconds);
+                labelText = labelText ? `${labelText} (${countdown})` : countdown;
             }
         }
 
-        this._label.set_text(labelText);
+        this._label.set_text(labelText || nextPrayer.timeString);
     }
 
     _updateLocation(location) {

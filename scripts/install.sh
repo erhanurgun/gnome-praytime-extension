@@ -52,6 +52,7 @@ cp -r stylesheet.css "$TARGET_DIR/"
 cp -r schemas "$TARGET_DIR/"
 cp -r src "$TARGET_DIR/"
 cp -r icons "$TARGET_DIR/"
+cp -r sounds "$TARGET_DIR/"
 
 echo -e "${GREEN}[OK] Dosyalar kopyalandı${NC}"
 

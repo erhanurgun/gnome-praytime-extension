@@ -48,10 +48,10 @@
     </key>
 
     <!-- Gösterim Ayarları -->
-    <key name="display-mode" type="s">
-      <default>'text'</default>
-      <summary>Görünüm modu</summary>
-      <description>Panel görünüm türü: text (tam metin), icon (sadece ikon), compact (kompakt)</description>
+    <key name="show-icon" type="b">
+      <default>true</default>
+      <summary>İkonu göster</summary>
+      <description>Panelde cami ikonu gösterilsin mi</description>
     </key>
 
     <key name="show-prayer-name" type="b">
