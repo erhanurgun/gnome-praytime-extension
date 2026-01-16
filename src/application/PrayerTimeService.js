@@ -21,6 +21,7 @@ export class PrayerTimeService {
         this._schedule = null;
         this._location = null;
         this._isRunning = false;
+        this._refreshScheduled = false;
     }
 
     get schedule() {
@@ -89,8 +90,17 @@ export class PrayerTimeService {
 
     _onCountdownTick() {
         this._triggerUpdate();
-        if (!this.getNextPrayer()) {
-            this._refreshPrayerTimes().catch(console.error);
+
+        // Sonraki namaz yoksa (tüm vakitler geçtiyse) vakitleri yenile
+        // NOT: 3 saniye gecikme ekleniyor çünkü "vakit girdi" bildirimi
+        // tam vakit girdiği anda tetiklenir. Eğer hemen refresh yaparsak,
+        // clearAll() ile bildirim timer'ı temizlenir ve bildirim gösterilmez.
+        if (!this.getNextPrayer() && !this._refreshScheduled) {
+            this._refreshScheduled = true;
+            this._timerManager._timerAdapter.setTimeout(() => {
+                this._refreshScheduled = false;
+                this._refreshPrayerTimes().catch(console.error);
+            }, 3);
         }
     }
 

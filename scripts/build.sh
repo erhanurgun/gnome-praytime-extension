@@ -49,6 +49,7 @@ zip -r "$OUTPUT_FILE" \
     schemas/ \
     src/ \
     icons/ \
+    sounds/ \
     --exclude "*.pyc" \
     --exclude "__pycache__/*" \
     --exclude ".git/*" \

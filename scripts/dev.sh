@@ -36,6 +36,7 @@ sync_files() {
     cp -r schemas "$TARGET_DIR/"
     cp -r src "$TARGET_DIR/"
     cp -r icons "$TARGET_DIR/"
+    cp -r sounds "$TARGET_DIR/"
 
     # Schema derle
     glib-compile-schemas "$TARGET_DIR/schemas/" 2>/dev/null

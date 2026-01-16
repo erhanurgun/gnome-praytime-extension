@@ -1,6 +1,6 @@
 #!/bin/bash
 # Praytime GNOME Extension - Kurulum Scripti
-# Uzantiyi ~/.local/share/gnome-shell/extensions/ dizinine kurar
+# Uzantıyı ~/.local/share/gnome-shell/extensions/ dizinine kurar
 
 set -e
 

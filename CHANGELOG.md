@@ -2,6 +2,23 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.6.3] - 2026-01-16
+
+### Düzeltildi
+- "Vakit girdi" bildirimi artık doğru çalışıyor (önceden sadece "X dakika kala" bildirimi geliyordu)
+- build.sh'a sounds/ dizini eklendi (bildirim sesi artık zip paketine dahil)
+- dev.sh'a sounds/ kopyalama eklendi (geliştirme modunda ses dosyaları senkronize ediliyor)
+- install.sh'daki Türkçe karakter hatası düzeltildi ("Uzantiyi" -> "Uzantıyı")
+
+### Teknik
+- PrayerTimeService._onCountdownTick(): Vakit geçtiğinde 3 saniye gecikme eklendi
+  - Sorun: Countdown tick ve "vakit girdi" timer'ı aynı anda tetikleniyordu
+  - Countdown tick önce çalışınca clearAll() ile bildirim timer'ı temizleniyordu
+  - Çözüm: Gecikme sayesinde "vakit girdi" bildirimi gösterildikten sonra refresh yapılıyor
+- NotificationScheduler: Debug logları eklendi (bildirim zamanlamasını izlemek için)
+- scripts/build.sh: sounds/ dizini zip paketine eklendi
+- scripts/dev.sh: sounds/ dizini senkronizasyona eklendi
+
 ## [0.6.2] - 2026-01-16
 
 ### Eklendi
