@@ -2,50 +2,56 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.5.4] - 2026-01-16
+
+### Düzeltildi
+- CHANGELOG.md'deki tüm Türkçe karakter sorunları düzeltildi
+- Türkçe özel karakterler (ç, ğ, ı, ö, ş, ü, İ) artık doğru görünüyor
+
 ## [0.5.3] - 2026-01-16
 
-### Duzeltildi
-- Panel konumu degisikligi artik aninda uygulanıyor (Top Bar Organizer yaklasimi)
-- Sol konumda panel Activities'ten sonra gorunuyor
+### Düzeltildi
+- Panel konumu değişikliği artık anında uygulanıyor (Top Bar Organizer yaklaşımı)
+- Sol konumda panel Activities'ten sonra görünüyor
 
 ### Teknik
-- extension._repositionPanel(): Panel destroy/recreate yerine container tasima yaklasimi
-- container.get_parent().remove_child() ile mevcut box'tan cikarma
+- extension._repositionPanel(): Panel destroy/recreate yerine container taşıma yaklaşımı
+- container.get_parent().remove_child() ile mevcut box'tan çıkarma
 - panelBox.insert_child_at_index(container, -1) ile yeni box'a ekleme
 
 ## [0.5.2] - 2026-01-16
 
-### Duzeltildi
-- "Sadece Ikon" gorunum modunda ikon artik gorunuyor
-- Panel ikonu tum gorunum modlarinda dogru calisiyor
+### Düzeltildi
+- "Sadece İkon" görünüm modunda ikon artık görünüyor
+- Panel ikonu tüm görünüm modlarında doğru çalışıyor
 
 ### Eklendi
-- St.Icon destegi ile cami ikonu panele eklendi
-- Gio import'u ile dosya sisteminden ikon yukleme
+- St.Icon desteği ile cami ikonu panele eklendi
+- Gio import'u ile dosya sisteminden ikon yükleme
 
 ### Teknik
-- PanelButton._buildPanel(): St.Icon olusturma ve Gio.icon_new_for_string() ile SVG yukleme
-- PanelButton._updatePanelLabel(): Gorunum moduna gore ikon/label gorunurluk yonetimi
-  - icon modu: sadece ikon goster
-  - compact modu: ikon + metin goster
-  - text modu: sadece metin goster
+- PanelButton._buildPanel(): St.Icon oluşturma ve Gio.icon_new_for_string() ile SVG yükleme
+- PanelButton._updatePanelLabel(): Görünüm moduna göre ikon/label görünürlük yönetimi
+  - icon modu: sadece ikon göster
+  - compact modu: ikon + metin göster
+  - text modu: sadece metin göster
 
 ## [0.5.1] - 2026-01-16
 
-### Duzeltildi
-- Ayarlar panelinden yapilan degisiklikler artik aninda etkili oluyor
-- display-mode, show-prayer-name, show-prayer-time ayarlari artik PanelButton'da kullaniliyor
-- Bildirim ayarlari (notifications-enabled, notify-before-minutes, notify-on-time) degistiginde bildirimler yeniden zamanlaniyor
+### Düzeltildi
+- Ayarlar panelinden yapılan değişiklikler artık anında etkili oluyor
+- display-mode, show-prayer-name, show-prayer-time ayarları artık PanelButton'da kullanılıyor
+- Bildirim ayarları (notifications-enabled, notify-before-minutes, notify-on-time) değiştiğinde bildirimler yeniden zamanlanıyor
 
 ### Eklendi
-- extension.js: Bildirim ayar handler'lari (_rescheduleNotifications metodu)
+- extension.js: Bildirim ayar handler'ları (_rescheduleNotifications metodu)
 - PrayerTimeService.js: rescheduleNotifications() metodu
 
 ### Teknik
-- PanelButton._updatePanelLabel artik display-mode'a gore davranir (icon/text/compact)
-- PanelButton.update artik tum gorunum ayarlarini (showName, showTime, showCountdown) okuyor
-- extension.js _handleSettingChange handler'larina notifications-enabled, notify-before-minutes, notify-on-time eklendi
-- Ayar degisiklik propagasyonu duzeltildi - settings change signal'lari dogru handler'lara yonlendiriliyor
+- PanelButton._updatePanelLabel artık display-mode'a göre davranır (icon/text/compact)
+- PanelButton.update artık tüm görünüm ayarlarını (showName, showTime, showCountdown) okuyor
+- extension.js _handleSettingChange handler'larına notifications-enabled, notify-before-minutes, notify-on-time eklendi
+- Ayar değişiklik propagasyonu düzeltildi - settings change signal'ları doğru handler'lara yönlendiriliyor
 
 ## [0.5.0] - 2026-01-16
 
