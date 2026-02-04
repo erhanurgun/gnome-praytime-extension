@@ -2,6 +2,10 @@
 
 GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 
+## SS
+
+<img width="237" height="481" alt="image" src="https://github.com/user-attachments/assets/608ff251-06dd-4065-aa30-86c6a6a97d41" />
+
 ## Özellikler
 
 - Panel üzerinde sonraki namaz vakti ve geri sayım
