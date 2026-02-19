@@ -7,7 +7,7 @@ class MockApiClient {
         this._shouldFail = false;
         this._errorMessage = 'Mock API hatası';
         this._fetchCount = 0;
-        this._lastLocationId = null;
+        this._lastLocation = null;
         this._destroyed = false;
     }
 
@@ -23,16 +23,15 @@ class MockApiClient {
     }
 
     // API çağrısını simüle et
-    async fetchPrayerTimes(locationId) {
+    async fetchPrayerTimes(location) {
         this._fetchCount++;
-        this._lastLocationId = locationId;
+        this._lastLocation = location;
 
         if (this._shouldFail) {
             throw new Error(this._errorMessage);
         }
 
         if (!this._mockData) {
-            // Varsayılan mock veri
             return this._getDefaultMockData();
         }
 
@@ -40,20 +39,15 @@ class MockApiClient {
     }
 
     _getDefaultMockData() {
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
-
-        return [
-            {
-                date: dateStr,
-                fajr: '05:30',
-                sun: '07:00',
-                dhuhr: '12:30',
-                asr: '15:45',
-                maghrib: '18:15',
-                isha: '19:45'
-            }
-        ];
+        // API client'ın _transformResponse sonucu: Türkçe isimli flat object
+        return {
+            'İmsak': '05:30',
+            'Güneş': '07:00',
+            'Öğle': '12:30',
+            'İkindi': '15:45',
+            'Akşam': '18:15',
+            'Yatsı': '19:45'
+        };
     }
 
     // Test için yardımcı metodlar
@@ -61,8 +55,8 @@ class MockApiClient {
         return this._fetchCount;
     }
 
-    getLastLocationId() {
-        return this._lastLocationId;
+    getLastLocation() {
+        return this._lastLocation;
     }
 
     reset() {
@@ -70,7 +64,7 @@ class MockApiClient {
         this._shouldFail = false;
         this._errorMessage = 'Mock API hatası';
         this._fetchCount = 0;
-        this._lastLocationId = null;
+        this._lastLocation = null;
     }
 
     destroy() {

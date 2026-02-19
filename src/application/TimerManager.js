@@ -3,7 +3,12 @@ export class TimerManager {
         this._timerAdapter = timerAdapter;
         this._countdownTimerId = null;
         this._dailyRefreshTimerId = null;
+        this._retryTimerId = null;
         this._isRunning = false;
+    }
+
+    get isRunning() {
+        return this._isRunning;
     }
 
     startCountdown(onTick) {
@@ -33,8 +38,28 @@ export class TimerManager {
         return Math.floor((midnight - now) / 1000);
     }
 
+    scheduleOnce(callback, seconds) {
+        return this._timerAdapter.setTimeout(callback, seconds);
+    }
+
+    scheduleRetry(callback, seconds) {
+        this.clearRetry();
+        this._retryTimerId = this._timerAdapter.setTimeout(() => {
+            this._retryTimerId = null;
+            callback();
+        }, seconds);
+    }
+
+    clearRetry() {
+        if (this._retryTimerId) {
+            this._timerAdapter.clearTimer(this._retryTimerId);
+            this._retryTimerId = null;
+        }
+    }
+
     stop() {
         this._isRunning = false;
+        this.clearRetry();
 
         if (this._countdownTimerId) {
             this._timerAdapter.clearTimer(this._countdownTimerId);

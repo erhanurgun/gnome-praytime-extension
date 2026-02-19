@@ -3,7 +3,7 @@ import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import { API_BASE_URL, PRAYER_NAMES, APP_USER_AGENT } from '../../config/constants.js';
 
-// Diyanet namaz vakitleri API istemcisi
+// Aladhan namaz vakitleri API istemcisi (Diyanet hesaplama metodu)
 export class PrayerTimesApiClient {
     constructor() {
         this._session = new Soup.Session({
@@ -13,19 +13,21 @@ export class PrayerTimesApiClient {
         this._cancellable = null;
     }
 
-    async fetchPrayerTimes(locationId) {
-        const url = `${API_BASE_URL}/api/diyanet/prayertimes?location_id=${locationId}`;
+    async fetchPrayerTimes(location) {
+        const dateStr = this._formatDate(new Date());
+        const city = encodeURIComponent(location.cityName);
+        const url = `${API_BASE_URL}/v1/timingsByCity/${dateStr}?city=${city}&country=Turkey&method=13`;
         const data = await this._fetchJson(url);
 
         if (!this._isValidResponse(data)) {
             throw new Error('API yanıtı geçersiz format');
         }
 
-        return this._getTodayPrayerTimes(data);
+        return this._transformResponse(data);
     }
 
     _isValidResponse(data) {
-        return data && Array.isArray(data) && data.length > 0;
+        return data && data.code === 200 && data.data && data.data.timings;
     }
 
     _fetchJson(url) {
@@ -61,30 +63,13 @@ export class PrayerTimesApiClient {
         });
     }
 
-    _getTodayPrayerTimes(data) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        for (const entry of data) {
-            const entryDate = new Date(entry.date);
-            entryDate.setHours(0, 0, 0, 0);
-
-            if (entryDate.getTime() === today.getTime()) {
-                return this._transformEntry(entry);
-            }
-        }
-
-        // Bugün bulunamazsa ilk kaydı kullan (API bazen farklı tarih döner)
-        console.warn('[Praytime] Bugünün vakitleri bulunamadı, ilk kayıt kullanılıyor');
-        return this._transformEntry(data[0]);
-    }
-
-    _transformEntry(entry) {
+    _transformResponse(data) {
+        const timings = data.data.timings;
         const timeRegex = /^\d{2}:\d{2}$/;
         const result = {};
 
         for (const prayer of PRAYER_NAMES) {
-            const value = entry[prayer.apiKey];
+            const value = timings[prayer.apiKey];
             if (!value || !timeRegex.test(value)) {
                 throw new Error(`API yanıtı geçersiz: ${prayer.name} değeri hatalı (${value})`);
             }
@@ -92,6 +77,13 @@ export class PrayerTimesApiClient {
         }
 
         return result;
+    }
+
+    _formatDate(date) {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
     }
 
     destroy() {

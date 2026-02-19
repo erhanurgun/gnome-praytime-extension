@@ -1,23 +1,23 @@
 // Uygulama sabitleri - DRY prensibi için merkezi tanımlama
 
 // Merkezi versiyon bilgisi
-export const APP_VERSION = '0.6.3';
-export const APP_VERSION_CODE = 18;
+export const APP_VERSION = '0.7.0';
+export const APP_VERSION_CODE = 19;
 export const APP_NAME = 'praytime@erho.dev';
 export const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 export const APP_DEVELOPER = '@erhanurgun';
 export const APP_WEBSITE = 'https://erho.me';
 
-export const API_BASE_URL = 'https://prayertimes.api.abdus.dev';
+export const API_BASE_URL = 'https://api.aladhan.com';
 
 // Namaz vakitleri - Türkçe isim, İngilizce isim ve API key eşleşmesi
 export const PRAYER_NAMES = [
-    { name: 'İmsak', nameEn: 'Imsak', apiKey: 'fajr' },
-    { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'sun' },
-    { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'dhuhr' },
-    { name: 'İkindi', nameEn: 'Asr', apiKey: 'asr' },
-    { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'maghrib' },
-    { name: 'Yatsı', nameEn: 'Isha', apiKey: 'isha' },
+    { name: 'İmsak', nameEn: 'Imsak', apiKey: 'Imsak' },
+    { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'Sunrise' },
+    { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'Dhuhr' },
+    { name: 'İkindi', nameEn: 'Asr', apiKey: 'Asr' },
+    { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'Maghrib' },
+    { name: 'Yatsı', nameEn: 'Isha', apiKey: 'Isha' },
 ];
 
 // Panel konumları

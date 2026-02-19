@@ -72,6 +72,13 @@ class PanelButton extends PanelMenu.Button {
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
+        const refreshItem = new PopupMenu.PopupMenuItem('Yenile');
+        this._refreshItem = refreshItem;
+        this._refreshHandlerId = refreshItem.connect('activate', () => {
+            this._extension.refreshService();
+        });
+        this.menu.addMenuItem(refreshItem);
+
         const settingsItem = new PopupMenu.PopupMenuItem('Ayarlar');
         this._settingsItem = settingsItem;
         this._settingsHandlerId = settingsItem.connect('activate', () => {
@@ -210,6 +217,11 @@ class PanelButton extends PanelMenu.Button {
     }
 
     destroy() {
+        if (this._refreshItem && this._refreshHandlerId) {
+            this._refreshItem.disconnect(this._refreshHandlerId);
+            this._refreshHandlerId = null;
+        }
+
         if (this._settingsItem && this._settingsHandlerId) {
             this._settingsItem.disconnect(this._settingsHandlerId);
             this._settingsHandlerId = null;
