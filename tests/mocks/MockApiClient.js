@@ -39,14 +39,20 @@ class MockApiClient {
     }
 
     _getDefaultMockData() {
-        // API client'ın _transformResponse sonucu: Türkçe isimli flat object
+        // API client'ın _transformResponse sonucu: { prayers, meta } formatı
         return {
-            'İmsak': '05:30',
-            'Güneş': '07:00',
-            'Öğle': '12:30',
-            'İkindi': '15:45',
-            'Akşam': '18:15',
-            'Yatsı': '19:45'
+            prayers: {
+                'İmsak': '05:30',
+                'Güneş': '07:00',
+                'Öğle': '12:30',
+                'İkindi': '15:45',
+                'Akşam': '18:15',
+                'Yatsı': '19:45'
+            },
+            meta: {
+                lastthird: '03:30',
+                hijriMonth: 8,
+            }
         };
     }
 

@@ -87,6 +87,11 @@ export default class PraytimeExtension extends Extension {
             'notifications-enabled': () => this._rescheduleNotifications(),
             'notify-before-minutes': () => this._rescheduleNotifications(),
             'notify-on-time': () => this._rescheduleNotifications(),
+            // Ek vakit ayarları
+            'sahur-enabled': () => this._restartService(),
+            'sahur-minutes-before': () => this._restartService(),
+            'ramadan-mode': () => this._restartService(),
+            'tahajjud-enabled': () => this._restartService(),
         };
 
         handlers[key]?.();

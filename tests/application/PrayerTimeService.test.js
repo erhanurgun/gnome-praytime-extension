@@ -5,6 +5,7 @@ const { MockApiClient } = require('../mocks/MockApiClient.js');
 const { MockLocationProvider, Location } = require('../mocks/MockLocationProvider.js');
 const { MockNotificationScheduler } = require('../mocks/MockNotificationScheduler.js');
 const { MockTimerAdapter } = require('../mocks/MockTimerAdapter.js');
+const { MockSettings } = require('../mocks/MockSettings.js');
 
 // PrayerTime sınıfının kopyası
 class PrayerTime {
@@ -77,6 +78,31 @@ class PrayerSchedule {
             }
         }
         return null;
+    }
+
+    getCurrentPrayer(fromDate = new Date()) {
+        let current = null;
+        for (const prayer of this._prayers) {
+            if (prayer.isPassed(fromDate)) {
+                current = prayer;
+            } else {
+                break;
+            }
+        }
+        return current;
+    }
+
+    insertPrayer(prayer) {
+        const index = this._prayers.findIndex(p => p.time > prayer.time);
+        if (index === -1) {
+            this._prayers.push(prayer);
+        } else {
+            this._prayers.splice(index, 0, prayer);
+        }
+    }
+
+    getPrayerByName(name) {
+        return this._prayers.find(p => p.name === name || p.nameEn === name);
     }
 }
 
@@ -201,6 +227,7 @@ class PrayerTimeService {
             locationProvider,
             timerManager,
             notificationScheduler,
+            settings,
             onUpdate,
             onNotification
         } = dependencies;
@@ -209,6 +236,7 @@ class PrayerTimeService {
         this._locationProvider = locationProvider;
         this._timerManager = timerManager;
         this._notificationScheduler = notificationScheduler;
+        this._settings = settings;
         this._onUpdate = onUpdate;
         this._onNotification = onNotification;
 
@@ -303,10 +331,11 @@ class PrayerTimeService {
                 throw new Error('Geçersiz konum');
             }
 
-            const apiData = await this._apiClient.fetchPrayerTimes(this._location);
+            const apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
             if (!this._isRunning) return;
 
-            this._schedule = PrayerSchedule.fromApiResponse(apiData, new Date());
+            this._schedule = PrayerSchedule.fromApiResponse(apiResponse.prayers, new Date());
+            this._addExtraPrayers(apiResponse.meta);
 
             this._notificationScheduler.scheduleForPrayers(
                 this._schedule.prayers,
@@ -367,6 +396,37 @@ class PrayerTimeService {
         this._refreshPrayerTimes().catch(() => {});
     }
 
+    _addExtraPrayers(meta) {
+        if (!this._settings || !meta) return;
+
+        const date = this._schedule.date;
+
+        if (this._settings.get_boolean('tahajjud-enabled') && meta.lastthird) {
+            const [h, m] = meta.lastthird.split(':').map(Number);
+            const time = new Date(date);
+            time.setHours(h, m, 0, 0);
+            this._schedule.insertPrayer(new PrayerTime('Teheccüd', 'Tahajjud', time));
+        }
+
+        if (this._isSahurEnabled(meta.hijriMonth)) {
+            const imsak = this._schedule.getPrayerByName('İmsak');
+            if (imsak) {
+                const minutes = this._settings.get_int('sahur-minutes-before');
+                const time = new Date(imsak.time);
+                time.setMinutes(time.getMinutes() - minutes);
+                this._schedule.insertPrayer(new PrayerTime('Sahur', 'Suhur', time));
+            }
+        }
+    }
+
+    _isSahurEnabled(hijriMonth) {
+        if (!this._settings.get_boolean('sahur-enabled')) return false;
+        const mode = this._settings.get_string('ramadan-mode');
+        if (mode === 'on') return true;
+        if (mode === 'off') return false;
+        return hijriMonth === 9;
+    }
+
     _triggerUpdate() {
         this._onUpdate?.();
     }
@@ -414,6 +474,7 @@ function createService(overrides = {}) {
     const timerAdapter = new MockTimerAdapter();
     const timerManager = overrides.timerManager || new MockTimerManager(timerAdapter);
     const notificationScheduler = overrides.notificationScheduler || new MockNotificationScheduler();
+    const settings = overrides.settings || new MockSettings();
     const onUpdate = overrides.onUpdate || (() => {});
     const onNotification = overrides.onNotification || (() => {});
 
@@ -423,6 +484,7 @@ function createService(overrides = {}) {
             locationProvider,
             timerManager,
             notificationScheduler,
+            settings,
             onUpdate,
             onNotification
         }),
@@ -430,7 +492,8 @@ function createService(overrides = {}) {
         locationProvider,
         timerManager,
         timerAdapter,
-        notificationScheduler
+        notificationScheduler,
+        settings
     };
 }
 
@@ -443,6 +506,7 @@ const apiClient1 = new MockApiClient();
 const locationProvider1 = new MockLocationProvider();
 const timerManager1 = new MockTimerManager();
 const notificationScheduler1 = new MockNotificationScheduler();
+const settings1 = new MockSettings();
 let updateCount = 0;
 
 const service1 = new PrayerTimeService({
@@ -450,6 +514,7 @@ const service1 = new PrayerTimeService({
     locationProvider: locationProvider1,
     timerManager: timerManager1,
     notificationScheduler: notificationScheduler1,
+    settings: settings1,
     onUpdate: () => updateCount++,
     onNotification: () => {}
 });
@@ -737,6 +802,157 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     failingApi20.setError(false);
     await service20.refresh();
     assertEqual(service20._retryCount, 0, 'refresh() retryCount sıfırlar');
+
+    // Test 21: Teheccüd ekleme - toggle açık
+    console.log('\n21. Teheccüd Ekleme - Toggle Açık:');
+    const settings21 = new MockSettings({ 'tahajjud-enabled': true });
+    const { service: service21 } = createService({ settings: settings21 });
+    await service21.start();
+    const tahajjud21 = service21.schedule.getPrayerByName('Teheccüd');
+    assert(tahajjud21 !== undefined, 'Teheccüd vakti eklendi');
+    assertEqual(tahajjud21.timeString, '03:30', 'Teheccüd saati doğru (Lastthird)');
+
+    // Teheccüd kronolojik sırada olmalı (03:30 < 05:30 İmsak)
+    const prayers21 = service21.schedule.prayers;
+    const tahajjudIdx = prayers21.findIndex(p => p.name === 'Teheccüd');
+    const imsakIdx = prayers21.findIndex(p => p.name === 'İmsak');
+    assert(tahajjudIdx < imsakIdx, 'Teheccüd İmsak\'tan önce sıralı');
+
+    // Test 22: Teheccüd eklenmemeli - toggle kapalı
+    console.log('\n22. Teheccüd - Toggle Kapalı:');
+    const settings22 = new MockSettings({ 'tahajjud-enabled': false });
+    const { service: service22 } = createService({ settings: settings22 });
+    await service22.start();
+    const tahajjud22 = service22.schedule.getPrayerByName('Teheccüd');
+    assertEqual(tahajjud22, undefined, 'Toggle kapalıyken Teheccüd eklenmez');
+
+    // Test 23: Sahur - Ramazan modu "on" (her zaman açık)
+    console.log('\n23. Sahur - Ramazan Modu "on":');
+    const settings23 = new MockSettings({
+        'ramadan-mode': 'on',
+        'sahur-enabled': true,
+        'sahur-minutes-before': 30,
+    });
+    const { service: service23 } = createService({ settings: settings23 });
+    await service23.start();
+    const sahur23 = service23.schedule.getPrayerByName('Sahur');
+    assert(sahur23 !== undefined, 'Ramazan modu "on" ile Sahur eklendi');
+    assertEqual(sahur23.timeString, '05:00', 'Sahur saati = İmsak(05:30) - 30dk = 05:00');
+
+    // Sahur İmsak'tan önce olmalı
+    const prayers23 = service23.schedule.prayers;
+    const sahurIdx23 = prayers23.findIndex(p => p.name === 'Sahur');
+    const imsakIdx23 = prayers23.findIndex(p => p.name === 'İmsak');
+    assert(sahurIdx23 < imsakIdx23, 'Sahur İmsak\'tan önce sıralı');
+
+    // Test 24: Sahur - Ramazan modu "auto" Hicri 9. ay (Ramazan)
+    console.log('\n24. Sahur - Auto Mod, Ramazan Ayı (Hicri 9):');
+    const ramazanApi = new MockApiClient();
+    ramazanApi.setMockData({
+        prayers: {
+            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
+            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+        },
+        meta: { lastthird: '03:30', hijriMonth: 9 }
+    });
+    const settings24 = new MockSettings({
+        'ramadan-mode': 'auto',
+        'sahur-enabled': true,
+        'sahur-minutes-before': 30,
+    });
+    const { service: service24 } = createService({ apiClient: ramazanApi, settings: settings24 });
+    await service24.start();
+    const sahur24 = service24.schedule.getPrayerByName('Sahur');
+    assert(sahur24 !== undefined, 'Hicri 9. ay (Ramazan) ile auto modda Sahur eklendi');
+
+    // Test 25: Sahur - Ramazan modu "auto" Hicri 8. ay (Ramazan değil)
+    console.log('\n25. Sahur - Auto Mod, Ramazan Dışı (Hicri 8):');
+    const settings25 = new MockSettings({
+        'ramadan-mode': 'auto',
+        'sahur-enabled': true,
+    });
+    // Default mock data hijriMonth: 8 döner
+    const { service: service25 } = createService({ settings: settings25 });
+    await service25.start();
+    const sahur25 = service25.schedule.getPrayerByName('Sahur');
+    assertEqual(sahur25, undefined, 'Ramazan dışında auto modda Sahur eklenmez');
+
+    // Test 26: Sahur - Ramazan modu "off"
+    console.log('\n26. Sahur - Ramazan Modu "off":');
+    const ramazanApi26 = new MockApiClient();
+    ramazanApi26.setMockData({
+        prayers: {
+            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
+            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+        },
+        meta: { lastthird: '03:30', hijriMonth: 9 }
+    });
+    const settings26 = new MockSettings({
+        'ramadan-mode': 'off',
+        'sahur-enabled': true,
+    });
+    const { service: service26 } = createService({ apiClient: ramazanApi26, settings: settings26 });
+    await service26.start();
+    const sahur26 = service26.schedule.getPrayerByName('Sahur');
+    assertEqual(sahur26, undefined, 'Ramazan modu "off" ile Sahur eklenmez');
+
+    // Test 27: Sahur toggle kapalı
+    console.log('\n27. Sahur - Toggle Kapalı:');
+    const settings27 = new MockSettings({
+        'ramadan-mode': 'on',
+        'sahur-enabled': false,
+    });
+    const { service: service27 } = createService({ settings: settings27 });
+    await service27.start();
+    const sahur27 = service27.schedule.getPrayerByName('Sahur');
+    assertEqual(sahur27, undefined, 'sahur-enabled=false ile Sahur eklenmez');
+
+    // Test 28: Sahur süresi değişikliği
+    console.log('\n28. Sahur Süresi Değişikliği:');
+    const settings28 = new MockSettings({
+        'ramadan-mode': 'on',
+        'sahur-enabled': true,
+        'sahur-minutes-before': 45,
+    });
+    const { service: service28 } = createService({ settings: settings28 });
+    await service28.start();
+    const sahur28 = service28.schedule.getPrayerByName('Sahur');
+    assert(sahur28 !== undefined, 'Sahur vakti eklendi');
+    assertEqual(sahur28.timeString, '04:45', 'Sahur saati = İmsak(05:30) - 45dk = 04:45');
+
+    // Test 29: Hem Sahur hem Teheccüd aktif
+    console.log('\n29. Sahur + Teheccüd Birlikte:');
+    const settings29 = new MockSettings({
+        'ramadan-mode': 'on',
+        'sahur-enabled': true,
+        'sahur-minutes-before': 30,
+        'tahajjud-enabled': true,
+    });
+    const { service: service29 } = createService({ settings: settings29 });
+    await service29.start();
+    assertEqual(service29.schedule.prayers.length, 8, 'Toplam 8 vakit (6 + Sahur + Teheccüd)');
+    const names29 = service29.schedule.prayers.map(p => p.name);
+    assert(names29.indexOf('Teheccüd') < names29.indexOf('Sahur'), 'Teheccüd(03:30) Sahur(05:00) önünde');
+    assert(names29.indexOf('Sahur') < names29.indexOf('İmsak'), 'Sahur(05:00) İmsak(05:30) önünde');
+
+    // Test 30: hijriMonth null olduğunda auto mod
+    console.log('\n30. Hicri Ay Null - Auto Mod:');
+    const nullHijriApi = new MockApiClient();
+    nullHijriApi.setMockData({
+        prayers: {
+            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
+            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+        },
+        meta: { lastthird: '03:30', hijriMonth: null }
+    });
+    const settings30 = new MockSettings({
+        'ramadan-mode': 'auto',
+        'sahur-enabled': true,
+    });
+    const { service: service30 } = createService({ apiClient: nullHijriApi, settings: settings30 });
+    await service30.start();
+    const sahur30 = service30.schedule.getPrayerByName('Sahur');
+    assertEqual(sahur30, undefined, 'hijriMonth=null ile auto modda Sahur eklenmez');
 
     // Sonuç
     console.log('\n=== Sonuç ===');

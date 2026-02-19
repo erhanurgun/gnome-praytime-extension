@@ -32,6 +32,13 @@ export default class PraytimePreferences extends ExtensionPreferences {
         window.add(notificationPage);
         this._buildNotificationPage(notificationPage);
 
+        const extraPage = new Adw.PreferencesPage({
+            title: 'Ek Vakitler',
+            icon_name: 'weather-clear-night-symbolic',
+        });
+        window.add(extraPage);
+        this._buildExtraPage(extraPage);
+
         const displayPage = new Adw.PreferencesPage({
             title: 'Görünüm',
             icon_name: 'preferences-desktop-display-symbolic',
@@ -148,6 +155,66 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         group.add(soundRow);
         this._settings.bind('notification-sound', soundRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+    }
+
+    _buildExtraPage(page) {
+        // Ramazan ayarları
+        const ramadanGroup = new Adw.PreferencesGroup({
+            title: 'Ramazan Ayarları',
+            description: 'Sahur vakti ve Ramazan modu ayarları',
+        });
+        page.add(ramadanGroup);
+
+        const RAMADAN_MODES = {
+            values: ['auto', 'on', 'off'],
+            labels: ['Otomatik (Hicri Takvim)', 'Her Zaman Açık', 'Kapalı'],
+        };
+
+        const ramadanModeRow = new Adw.ComboRow({
+            title: 'Ramazan Modu',
+            subtitle: 'Sahur vaktinin ne zaman gösterileceğini belirler',
+        });
+        ramadanModeRow.model = this._createDropdownModel(RAMADAN_MODES.labels);
+        ramadanModeRow.selected = getIndexFromValue(RAMADAN_MODES, this._settings.get_string('ramadan-mode'));
+
+        this._connectAndTrack(ramadanModeRow, 'notify::selected', () => {
+            this._settings.set_string('ramadan-mode', getValueFromIndex(RAMADAN_MODES, ramadanModeRow.selected));
+        });
+        ramadanGroup.add(ramadanModeRow);
+
+        const sahurEnabledRow = new Adw.SwitchRow({
+            title: 'Sahur Bildirimi',
+            subtitle: 'Ramazan\'da sahur vaktini göster ve bildirim gönder',
+        });
+        ramadanGroup.add(sahurEnabledRow);
+        this._settings.bind('sahur-enabled', sahurEnabledRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+
+        const sahurMinutesRow = new Adw.SpinRow({
+            title: 'Sahur Süresi',
+            subtitle: 'İmsak\'tan kaç dakika önce sahur vakti başlasın',
+            adjustment: new Gtk.Adjustment({
+                lower: 15,
+                upper: 90,
+                step_increment: 5,
+                page_increment: 15,
+            }),
+        });
+        ramadanGroup.add(sahurMinutesRow);
+        this._settings.bind('sahur-minutes-before', sahurMinutesRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+
+        // Teheccüd ayarları
+        const tahajjudGroup = new Adw.PreferencesGroup({
+            title: 'Teheccüd Ayarları',
+            description: 'Gecenin son üçte birinde kılınan nafile namaz',
+        });
+        page.add(tahajjudGroup);
+
+        const tahajjudEnabledRow = new Adw.SwitchRow({
+            title: 'Teheccüd Bildirimi',
+            subtitle: 'Teheccüd vaktini göster ve bildirim gönder',
+        });
+        tahajjudGroup.add(tahajjudEnabledRow);
+        this._settings.bind('tahajjud-enabled', tahajjudEnabledRow, 'active', Gio.SettingsBindFlags.DEFAULT);
     }
 
     _buildDisplayPage(page) {

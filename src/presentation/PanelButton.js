@@ -61,13 +61,16 @@ class PanelButton extends PanelMenu.Button {
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
+        this._prayerSection = new PopupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this._prayerSection);
+
         const prayerNames = getPrayerNamesList();
         for (const name of prayerNames) {
             const item = new PopupMenu.PopupMenuItem(`--:-- - ${name}`, {
                 reactive: false,
             });
             this._prayerItems.push({ name, item });
-            this.menu.addMenuItem(item);
+            this._prayerSection.addMenuItem(item);
         }
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -187,6 +190,15 @@ class PanelButton extends PanelMenu.Button {
     }
 
     _updatePrayerList(schedule, nextPrayer) {
+        const scheduleNames = schedule.prayers.map(p => p.name);
+        const currentNames = this._prayerItems.map(pi => pi.name);
+
+        // Vakit listesi değiştiyse rebuild (Sahur/Teheccüd eklenmiş veya kaldırılmış olabilir)
+        if (scheduleNames.length !== currentNames.length ||
+            !scheduleNames.every((n, i) => n === currentNames[i])) {
+            this._rebuildPrayerItems(schedule);
+        }
+
         const currentPrayer = schedule.getCurrentPrayer();
 
         for (const { name, item } of this._prayerItems) {
@@ -200,6 +212,18 @@ class PanelButton extends PanelMenu.Button {
                     'praytime-next': nextPrayer?.name === name
                 });
             }
+        }
+    }
+
+    _rebuildPrayerItems(schedule) {
+        this._prayerSection.removeAll();
+        this._prayerItems = [];
+        for (const prayer of schedule.prayers) {
+            const item = new PopupMenu.PopupMenuItem(`${prayer.timeString} - ${prayer.name}`, {
+                reactive: false,
+            });
+            this._prayerItems.push({ name: prayer.name, item });
+            this._prayerSection.addMenuItem(item);
         }
     }
 
@@ -232,6 +256,9 @@ class PanelButton extends PanelMenu.Button {
             this._versionHandlerId = null;
         }
 
+        if (this._prayerSection) {
+            this._prayerSection.removeAll();
+        }
         this._prayerItems = [];
         super.destroy();
     }
