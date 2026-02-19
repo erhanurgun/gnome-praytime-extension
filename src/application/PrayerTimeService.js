@@ -22,6 +22,8 @@ export class PrayerTimeService {
         this._location = null;
         this._isRunning = false;
         this._refreshScheduled = false;
+        this._retryCount = 0;
+        this._refreshInFlight = false;
     }
 
     get schedule() {
@@ -47,7 +49,10 @@ export class PrayerTimeService {
     }
 
     async start() {
+        if (this._refreshInFlight) return;
         this._isRunning = true;
+        this._retryCount = 0;
+
         try {
             await this._refreshPrayerTimes();
             if (!this._isRunning) return;
@@ -55,37 +60,109 @@ export class PrayerTimeService {
             this._timerManager.startCountdown(() => this._onCountdownTick());
             this._timerManager.scheduleDailyRefresh(() => this._onDailyRefresh());
         } catch (error) {
+            if (!this._isRunning) return;
             console.error(`[Praytime] Servis başlatma hatası: ${error.message}`);
             this._schedule = null;
             this._triggerUpdate();
+            this._scheduleRetry();
         }
     }
 
     stop() {
         this._isRunning = false;
+        this._retryCount = 0;
+        this._refreshInFlight = false;
         this._timerManager.stop();
         this._notificationScheduler.clearAll();
         this._schedule = null;
         this._location = null;
     }
 
-    async _refreshPrayerTimes() {
-        this._location = this._locationProvider.getLocation();
+    async refresh() {
+        this._retryCount = 0;
+        this._timerManager.clearRetry();
 
-        if (!this._location?.isValid()) {
-            throw new Error('Geçersiz konum');
+        try {
+            await this._refreshPrayerTimes();
+            if (!this._isRunning) return;
+
+            if (!this._timerManager.isRunning) {
+                this._timerManager.startCountdown(() => this._onCountdownTick());
+                this._timerManager.scheduleDailyRefresh(() => this._onDailyRefresh());
+            }
+        } catch (error) {
+            if (!this._isRunning) return;
+            console.error(`[Praytime] Manuel yenileme başarısız: ${error.message}`);
+            this._schedule = null;
+            this._triggerUpdate();
+            if (error.message !== 'Geçersiz konum') {
+                this._scheduleRetry();
+            }
         }
+    }
 
-        const apiData = await this._apiClient.fetchPrayerTimes(this._location.id);
-        this._schedule = PrayerSchedule.fromApiResponse(apiData, new Date());
+    async _refreshPrayerTimes() {
+        if (this._refreshInFlight) return;
+        this._refreshInFlight = true;
 
-        this._notificationScheduler.scheduleForPrayers(
-            this._schedule.prayers,
-            (title, body) => this._onNotification?.(title, body)
-        );
+        try {
+            this._location = this._locationProvider.getLocation();
 
-        this._triggerUpdate();
-        console.log(`[Praytime] Vakitler güncellendi: ${this._location.toString()}`);
+            if (!this._location?.isValid()) {
+                throw new Error('Geçersiz konum');
+            }
+
+            const apiData = await this._apiClient.fetchPrayerTimes(this._location);
+            if (!this._isRunning) return;
+
+            this._schedule = PrayerSchedule.fromApiResponse(apiData, new Date());
+
+            this._notificationScheduler.scheduleForPrayers(
+                this._schedule.prayers,
+                (title, body) => this._onNotification?.(title, body)
+            );
+
+            this._triggerUpdate();
+            console.log(`[Praytime] Vakitler güncellendi: ${this._location.toString()}`);
+        } finally {
+            this._refreshInFlight = false;
+        }
+    }
+
+    _scheduleRetry() {
+        if (!this._isRunning) return;
+
+        const delays = [15, 30, 60, 120, 300];
+        const delay = delays[Math.min(this._retryCount, delays.length - 1)];
+        this._retryCount++;
+
+        console.log(`[Praytime] ${delay}s sonra yeniden denenecek (deneme: ${this._retryCount})`);
+        this._timerManager.scheduleRetry(() => this._attemptRecovery(), delay);
+    }
+
+    async _attemptRecovery() {
+        if (!this._isRunning) return;
+
+        try {
+            await this._refreshPrayerTimes();
+            if (!this._isRunning) return;
+
+            this._retryCount = 0;
+            if (!this._timerManager.isRunning) {
+                this._timerManager.startCountdown(() => this._onCountdownTick());
+                this._timerManager.scheduleDailyRefresh(() => this._onDailyRefresh());
+            }
+            console.log('[Praytime] Bağlantı yeniden kuruldu');
+        } catch (error) {
+            if (!this._isRunning) return;
+            console.error(`[Praytime] Yeniden deneme başarısız: ${error.message}`);
+            this._schedule = null;
+            this._triggerUpdate();
+
+            if (error.message !== 'Geçersiz konum') {
+                this._scheduleRetry();
+            }
+        }
     }
 
     _onCountdownTick() {
@@ -97,7 +174,7 @@ export class PrayerTimeService {
         // clearAll() ile bildirim timer'ı temizlenir ve bildirim gösterilmez.
         if (!this.getNextPrayer() && !this._refreshScheduled) {
             this._refreshScheduled = true;
-            this._timerManager._timerAdapter.setTimeout(() => {
+            this._timerManager.scheduleOnce(() => {
                 this._refreshScheduled = false;
                 this._refreshPrayerTimes().catch(console.error);
             }, 3);

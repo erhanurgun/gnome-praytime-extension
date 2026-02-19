@@ -131,6 +131,15 @@ export default class PraytimeExtension extends Extension {
         console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
     }
 
+    async refreshService() {
+        if (!this._service || !this._isEnabled) return;
+        try {
+            await this._service.refresh();
+        } catch (error) {
+            console.error(`[Praytime] Manuel yenileme hatası: ${error.message}`);
+        }
+    }
+
     _onUpdate() {
         this._panelButton?.update(this._service);
     }
