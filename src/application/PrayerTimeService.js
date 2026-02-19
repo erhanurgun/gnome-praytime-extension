@@ -1,4 +1,5 @@
 import { PrayerSchedule } from '../domain/models/PrayerSchedule.js';
+import { PrayerTime } from '../domain/models/PrayerTime.js';
 
 export class PrayerTimeService {
     constructor(dependencies) {
@@ -7,6 +8,7 @@ export class PrayerTimeService {
             locationProvider,
             timerManager,
             notificationScheduler,
+            settings,
             onUpdate,
             onNotification
         } = dependencies;
@@ -15,6 +17,7 @@ export class PrayerTimeService {
         this._locationProvider = locationProvider;
         this._timerManager = timerManager;
         this._notificationScheduler = notificationScheduler;
+        this._settings = settings;
         this._onUpdate = onUpdate;
         this._onNotification = onNotification;
 
@@ -112,10 +115,11 @@ export class PrayerTimeService {
                 throw new Error('Geçersiz konum');
             }
 
-            const apiData = await this._apiClient.fetchPrayerTimes(this._location);
+            const apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
             if (!this._isRunning) return;
 
-            this._schedule = PrayerSchedule.fromApiResponse(apiData, new Date());
+            this._schedule = PrayerSchedule.fromApiResponse(apiResponse.prayers, new Date());
+            this._addExtraPrayers(apiResponse.meta);
 
             this._notificationScheduler.scheduleForPrayers(
                 this._schedule.prayers,
@@ -183,6 +187,40 @@ export class PrayerTimeService {
 
     _onDailyRefresh() {
         this._refreshPrayerTimes().catch(console.error);
+    }
+
+    _addExtraPrayers(meta) {
+        if (!this._settings || !meta) return;
+
+        const date = this._schedule.date;
+
+        // Teheccüd (yıl boyu, toggle'a bağlı)
+        if (this._settings.get_boolean('tahajjud-enabled') && meta.lastthird) {
+            const [h, m] = meta.lastthird.split(':').map(Number);
+            const time = new Date(date);
+            time.setHours(h, m, 0, 0);
+            this._schedule.insertPrayer(new PrayerTime('Teheccüd', 'Tahajjud', time));
+        }
+
+        // Sahur (Ramazan + toggle'a bağlı)
+        if (this._isSahurEnabled(meta.hijriMonth)) {
+            const imsak = this._schedule.getPrayerByName('İmsak');
+            if (imsak) {
+                const minutes = this._settings.get_int('sahur-minutes-before');
+                const time = new Date(imsak.time);
+                time.setMinutes(time.getMinutes() - minutes);
+                this._schedule.insertPrayer(new PrayerTime('Sahur', 'Suhur', time));
+            }
+        }
+    }
+
+    _isSahurEnabled(hijriMonth) {
+        if (!this._settings.get_boolean('sahur-enabled')) return false;
+        const mode = this._settings.get_string('ramadan-mode');
+        if (mode === 'on') return true;
+        if (mode === 'off') return false;
+        // auto: Hicri 9. ay = Ramazan
+        return hijriMonth === 9;
     }
 
     _triggerUpdate() {

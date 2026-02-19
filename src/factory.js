@@ -62,6 +62,7 @@ export class ServiceFactory {
             locationProvider: this.createLocationProvider(),
             timerManager: this.createTimerManager(),
             notificationScheduler: this.createNotificationScheduler(),
+            settings: this._settings,
             onUpdate,
             onNotification
         });

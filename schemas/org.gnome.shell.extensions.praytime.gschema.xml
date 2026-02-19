@@ -85,5 +85,31 @@
       <description>Extension panelde nerede gösterilecek (left, center, right)</description>
     </key>
 
+    <!-- Ramazan ve Ek Vakit Ayarları -->
+    <key name="ramadan-mode" type="s">
+      <default>'auto'</default>
+      <summary>Ramazan modu</summary>
+      <description>Ramazan tespiti: auto (Hicri takvimden), on (her zaman), off (kapalı)</description>
+    </key>
+
+    <key name="sahur-enabled" type="b">
+      <default>true</default>
+      <summary>Sahur bildirimi</summary>
+      <description>Ramazan'da sahur vaktini göster ve bildirim gönder</description>
+    </key>
+
+    <key name="sahur-minutes-before" type="i">
+      <default>30</default>
+      <summary>Sahur süresi (dakika)</summary>
+      <description>İmsak'tan kaç dakika önce sahur vakti başlasın</description>
+      <range min="15" max="90"/>
+    </key>
+
+    <key name="tahajjud-enabled" type="b">
+      <default>false</default>
+      <summary>Teheccüd bildirimi</summary>
+      <description>Teheccüd vaktini göster ve bildirim gönder</description>
+    </key>
+
   </schema>
 </schemalist>

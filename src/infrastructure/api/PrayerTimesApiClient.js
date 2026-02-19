@@ -66,17 +66,25 @@ export class PrayerTimesApiClient {
     _transformResponse(data) {
         const timings = data.data.timings;
         const timeRegex = /^\d{2}:\d{2}$/;
-        const result = {};
+        const prayers = {};
 
         for (const prayer of PRAYER_NAMES) {
             const value = timings[prayer.apiKey];
             if (!value || !timeRegex.test(value)) {
                 throw new Error(`API yanıtı geçersiz: ${prayer.name} değeri hatalı (${value})`);
             }
-            result[prayer.name] = value;
+            prayers[prayer.name] = value;
         }
 
-        return result;
+        // Ek vakit meta verisi (Teheccüd ve Ramazan tespiti için)
+        const lastthirdRaw = timings.Lastthird || null;
+        const lastthird = lastthirdRaw ? lastthirdRaw.replace(/\s*\(.*\)/, '') : null;
+        const hijriMonth = data.data.date?.hijri?.month?.number ?? null;
+
+        return {
+            prayers,
+            meta: { lastthird, hijriMonth },
+        };
     }
 
     _formatDate(date) {

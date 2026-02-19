@@ -7,6 +7,10 @@ class MockSettings {
             'location-id': 0,
             'city-name': '',
             'region-name': '',
+            'ramadan-mode': 'auto',
+            'sahur-enabled': true,
+            'sahur-minutes-before': 30,
+            'tahajjud-enabled': false,
             ...initialValues
         };
     }
@@ -21,11 +25,20 @@ class MockSettings {
         return typeof value === 'string' ? value : '';
     }
 
+    get_boolean(key) {
+        const value = this._values[key];
+        return typeof value === 'boolean' ? value : false;
+    }
+
     set_int(key, value) {
         this._values[key] = value;
     }
 
     set_string(key, value) {
+        this._values[key] = value;
+    }
+
+    set_boolean(key, value) {
         this._values[key] = value;
     }
 
