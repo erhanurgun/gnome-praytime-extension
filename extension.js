@@ -4,6 +4,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { ServiceFactory } from './src/factory.js';
 import { createGettextWrapper } from './src/i18n/gettext.js';
+import { LOCATION_STATUS } from './src/config/constants.js';
 
 export default class PraytimeExtension extends Extension {
     enable() {
@@ -81,6 +82,10 @@ export default class PraytimeExtension extends Extension {
     _handleSettingChange(key) {
         if (!this._isEnabled) return;
 
+        // Validasyon status key'leri sonsuz döngü oluşturmamalı
+        const IGNORED_KEYS = ['location-status', 'location-status-message'];
+        if (IGNORED_KEYS.includes(key)) return;
+
         // Metin girişi olan ayarlar için debounce
         const DEBOUNCED_KEYS = ['city-name', 'country-name'];
         if (DEBOUNCED_KEYS.includes(key)) {
@@ -88,6 +93,8 @@ export default class PraytimeExtension extends Extension {
                 GLib.source_remove(this._debounceTimer);
                 this._debounceTimer = null;
             }
+            this._settings.set_string('location-status', LOCATION_STATUS.UNKNOWN);
+            this._settings.set_string('location-status-message', '');
             this._debounceTimer = GLib.timeout_add_seconds(
                 GLib.PRIORITY_DEFAULT, 2, () => {
                     this._debounceTimer = null;
@@ -140,6 +147,9 @@ export default class PraytimeExtension extends Extension {
 
     async _restartService() {
         if (!this._service) return;
+
+        this._settings.set_string('location-status', LOCATION_STATUS.UNKNOWN);
+        this._settings.set_string('location-status-message', '');
 
         this._service.stop();
         if (!this._isEnabled) return;
