@@ -154,20 +154,58 @@
     font-weight: 600;
 }
 
-/* Ayarlar butonu */
-.praytime-settings-item {
-    margin-top: 8px;
+/* Yenile / Ayarlar buton satırı */
+.praytime-action-row {
+    spacing: 6px;
+    padding: 0 !important;
+}
+
+/* PopupBaseMenuItem hover'ını etkisizleştir */
+.praytime-action-row:hover,
+.praytime-action-row:focus,
+.praytime-action-row:active,
+.praytime-action-row.active {
+    background-color: transparent !important;
+}
+
+.praytime-action-button {
+    border-radius: 8px;
+    padding: 8px 16px;
+    spacing: 6px;
+}
+
+.praytime-action-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Dikey ayraç */
+.praytime-action-divider {
+    width: 1px;
+    background-color: rgba(255, 255, 255, 0.15);
+    margin-top: 6px;
+    margin-bottom: 6px;
 }
 
 /* Eski uyumluluk */
 .praytime-header {
     font-weight: bold;
     font-size: 1.1em;
+    text-align: center;
+}
+
+.praytime-version {
+    text-align: center;
 }
 
 .praytime-location {
     font-style: italic;
     color: #888;
+}
+
+/* Sağa yaslı saat etiketi */
+.praytime-time-label {
+    font-family: monospace;
+    text-align: right;
 }
 
 .praytime-active {
