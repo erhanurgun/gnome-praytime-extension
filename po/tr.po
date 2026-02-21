@@ -1,0 +1,500 @@
+# Turkish translations for praytime@erho.dev package.
+# Copyright (C) 2026 Erhan ÜRGÜN
+# This file is distributed under the same license as the praytime@erho.dev package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: praytime@erho.dev 0.9.1\n"
+"Report-Msgid-Bugs-To: https://github.com/erhanurgun/LINUX-ubuntu-gnome-"
+"praytime-extension/issues\n"
+"POT-Creation-Date: 2026-02-21 21:28+0300\n"
+"PO-Revision-Date: 2026-02-21 21:28+0300\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: prefs.js:31 prefs.js:466 src/presentation/PanelButton.js:59
+#: src/presentation/PanelButton.js:119 src/presentation/PanelButton.js:186
+msgid "Konum"
+msgstr ""
+
+#: prefs.js:38
+msgid "Bildirimler"
+msgstr ""
+
+#: prefs.js:45
+msgid "Ek Vakitler"
+msgstr ""
+
+#: prefs.js:52
+msgid "Görünüm"
+msgstr ""
+
+#: prefs.js:59
+msgid "Hakkında"
+msgstr ""
+
+#: prefs.js:92
+msgid "Konum Yöntemi"
+msgstr ""
+
+#: prefs.js:93
+msgid "Namaz vakitlerinin hesaplanacağı konumu belirleyin"
+msgstr ""
+
+#: prefs.js:98
+msgid "Konum Modu"
+msgstr ""
+
+#: prefs.js:112 src/config/constants.js:35
+msgid "Şehir/Ülke"
+msgstr ""
+
+#: prefs.js:118
+msgid "Ülke"
+msgstr ""
+
+#: prefs.js:130
+msgid "İl"
+msgstr ""
+
+#: prefs.js:131
+msgid "Türkiye'nin 81 ilinden birini seçin"
+msgstr ""
+
+#: prefs.js:152
+msgid "Şehir Adı"
+msgstr ""
+
+#: prefs.js:162 prefs.js:202
+msgid "Konum Bilgisi"
+msgstr ""
+
+#: prefs.js:163
+msgid "Vakitler Diyanet İşleri Başkanlığı verilerine göre hesaplanır"
+msgstr ""
+
+#: prefs.js:171 src/config/constants.js:35
+msgid "Enlem/Boylam"
+msgstr ""
+
+#: prefs.js:176
+msgid "Enlem"
+msgstr ""
+
+#: prefs.js:189
+msgid "Boylam"
+msgstr ""
+
+#: prefs.js:203
+msgid "Koordinatları maps.google.com'dan alabilirsiniz"
+msgstr ""
+
+#: prefs.js:210
+msgid "Hesaplama Yöntemi"
+msgstr ""
+
+#: prefs.js:211
+msgid "Namaz vakitlerinin hesaplanacağı yöntemi seçin"
+msgstr ""
+
+#: prefs.js:216
+msgid "Hesaplama Metodu"
+msgstr ""
+
+#: prefs.js:234
+msgid "Dil Ayarları"
+msgstr ""
+
+#: prefs.js:240
+msgid "Otomatik (Sistem Dili)"
+msgstr ""
+
+#: prefs.js:240
+msgid "Türkçe"
+msgstr ""
+
+#: prefs.js:244
+msgid "Dil"
+msgstr ""
+
+#: prefs.js:274
+msgid "Bildirim Ayarları"
+msgstr ""
+
+#: prefs.js:275
+msgid "Namaz vakti bildirimleri"
+msgstr ""
+
+#: prefs.js:280
+msgid "Bildirimleri Etkinleştir"
+msgstr ""
+
+#: prefs.js:281
+msgid "Namaz vakti girince bildirim göster"
+msgstr ""
+
+#: prefs.js:287
+msgid "Önceden Bildir"
+msgstr ""
+
+#: prefs.js:288
+msgid "Vakit girmeden kaç dakika önce bildirim göster"
+msgstr ""
+
+#: prefs.js:300
+msgid "Vakit Girince Bildir"
+msgstr ""
+
+#: prefs.js:301
+msgid "Vakit tam girdiğinde bildirim göster"
+msgstr ""
+
+#: prefs.js:307
+msgid "Bildirim Sesi"
+msgstr ""
+
+#: prefs.js:308
+msgid "Bildirim geldiğinde ses çal"
+msgstr ""
+
+#: prefs.js:316
+msgid "Ramazan Ayarları"
+msgstr ""
+
+#: prefs.js:317
+msgid "Sahur vakti ve Ramazan modu ayarları"
+msgstr ""
+
+#: prefs.js:323
+msgid "Otomatik (Hicri Takvim)"
+msgstr ""
+
+#: prefs.js:323
+msgid "Her Zaman Açık"
+msgstr ""
+
+#: prefs.js:323
+msgid "Kapalı"
+msgstr ""
+
+#: prefs.js:327
+msgid "Ramazan Modu"
+msgstr ""
+
+#: prefs.js:328
+msgid "Sahur vaktinin ne zaman gösterileceğini belirler"
+msgstr ""
+
+#: prefs.js:339
+msgid "Sahur Bildirimi"
+msgstr ""
+
+#: prefs.js:340
+msgid "Ramazan'da sahur vaktini göster ve bildirim gönder"
+msgstr ""
+
+#: prefs.js:346
+msgid "Sahur Süresi"
+msgstr ""
+
+#: prefs.js:347
+msgid "İmsak'tan kaç dakika önce sahur vakti başlasın"
+msgstr ""
+
+#: prefs.js:359
+msgid "Teheccüd Ayarları"
+msgstr ""
+
+#: prefs.js:360
+msgid "Gecenin son üçte birinde kılınan nafile namaz"
+msgstr ""
+
+#: prefs.js:365
+msgid "Teheccüd Bildirimi"
+msgstr ""
+
+#: prefs.js:366
+msgid "Teheccüd vaktini göster ve bildirim gönder"
+msgstr ""
+
+#: prefs.js:372
+msgid "Teheccüd Ofseti"
+msgstr ""
+
+#: prefs.js:373
+msgid "Gecenin son üçte birinden kaç dakika kaydırılsın"
+msgstr ""
+
+#: prefs.js:387
+msgid "Panel Görünümü"
+msgstr ""
+
+#: prefs.js:388
+msgid "Paneldeki görünüm ayarları"
+msgstr ""
+
+#: prefs.js:393
+msgid "İkonu Göster"
+msgstr ""
+
+#: prefs.js:394
+msgid "Panelde cami ikonu"
+msgstr ""
+
+#: prefs.js:400
+msgid "Vakit Adını Göster"
+msgstr ""
+
+#: prefs.js:401
+msgid "\"İkindi\" gibi vakit ismi"
+msgstr ""
+
+#: prefs.js:407
+msgid "Vakit Saatini Göster"
+msgstr ""
+
+#: prefs.js:408
+msgid "\"14:52\" gibi saat bilgisi"
+msgstr ""
+
+#: prefs.js:435
+msgid "Geri Sayım"
+msgstr ""
+
+#: prefs.js:436
+msgid "Vakte kalan süre gösterimi"
+msgstr ""
+
+#: prefs.js:441
+msgid "Geri Sayım Göster"
+msgstr ""
+
+#: prefs.js:442
+msgid "Sonraki vakte kalan süreyi göster"
+msgstr ""
+
+#: prefs.js:448
+msgid "Geri Sayım Eşiği"
+msgstr ""
+
+#: prefs.js:449
+msgid "Ne kadar süre kala geri sayım başlasın (dakika)"
+msgstr ""
+
+#: prefs.js:461
+msgid "Panel Konumu"
+msgstr ""
+
+#: prefs.js:467
+msgid "Extension panelde nerede gösterilecek"
+msgstr ""
+
+#: prefs.js:507
+msgid "Sürüm"
+msgstr ""
+
+#: prefs.js:517
+msgid "Geliştirici"
+msgstr ""
+
+#: prefs.js:522
+msgid "Lisans"
+msgstr ""
+
+#: prefs.js:527
+msgid "Bağlantılar"
+msgstr ""
+
+#: prefs.js:531
+msgid "Tüm Bağlantılar"
+msgstr ""
+
+#: prefs.js:531
+msgid "Geliştirici hakkında"
+msgstr ""
+
+#: prefs.js:532
+msgid "Kaynak kodu görüntüle"
+msgstr ""
+
+#: prefs.js:533
+msgid "Hata Bildir"
+msgstr ""
+
+#: prefs.js:533
+msgid "Sorun veya önerileri bildirin"
+msgstr ""
+
+#: src/config/constants.js:18
+msgid "İmsak"
+msgstr ""
+
+#: src/config/constants.js:19
+msgid "Güneş"
+msgstr ""
+
+#: src/config/constants.js:20
+msgid "Öğle"
+msgstr ""
+
+#: src/config/constants.js:21
+msgid "İkindi"
+msgstr ""
+
+#: src/config/constants.js:22
+msgid "Akşam"
+msgstr ""
+
+#: src/config/constants.js:23
+msgid "Yatsı"
+msgstr ""
+
+#: src/config/constants.js:29
+msgid "Sol"
+msgstr ""
+
+#: src/config/constants.js:29
+msgid "Orta"
+msgstr ""
+
+#: src/config/constants.js:29
+msgid "Sağ"
+msgstr ""
+
+#: src/presentation/PanelButton.js:42
+msgid "Yükleniyor..."
+msgstr ""
+
+#: src/presentation/PanelButton.js:53
+msgid "Namaz Vakitleri"
+msgstr ""
+
+#: src/presentation/PanelButton.js:81
+msgid "Yenile"
+msgstr ""
+
+#: src/presentation/PanelButton.js:88
+msgid "Ayarlar"
+msgstr ""
+
+#: src/presentation/PanelButton.js:109
+msgid "Hata"
+msgstr ""
+
+#: src/presentation/PanelButton.js:118
+msgid "Bağlantı hatası"
+msgstr ""
+
+#: src/presentation/PanelButton.js:119
+msgid "Yüklenemedi"
+msgstr ""
+
+#: src/application/NotificationScheduler.js:58
+#, javascript-format
+msgid "%d dakika sonra %s"
+msgstr ""
+
+#: src/application/NotificationScheduler.js:59
+#, javascript-format
+msgid "%s vakti %s'de girecek"
+msgstr ""
+
+#: src/application/NotificationScheduler.js:79
+#, javascript-format
+msgid "%s vakti girdi"
+msgstr ""
+
+#: src/application/NotificationScheduler.js:80
+#, javascript-format
+msgid "Şimdi %s vakti"
+msgstr ""
+
+#: src/application/PrayerTimeService.js:224
+msgid "Teheccüd"
+msgstr ""
+
+#: src/application/PrayerTimeService.js:234
+msgid "Sahur"
+msgstr ""
+
+#: src/application/PrayerTimeService.js
+msgid "Geçersiz konum bilgisi"
+msgstr ""
+
+#: src/application/PrayerTimeService.js
+msgid "Ülke adı girilmedi"
+msgstr ""
+
+#: src/application/PrayerTimeService.js
+msgid "Şehir adı girilmedi"
+msgstr ""
+
+#: src/application/PrayerTimeService.js
+msgid "Girilen şehir veya ülke bulunamadı"
+msgstr ""
+
+#: src/application/PrayerTimeService.js
+msgid "Ağ bağlantısı hatası"
+msgstr ""
+
+#: prefs.js
+msgid "Konum doğrulanamadı"
+msgstr ""
+
+#: prefs.js
+msgid "Lütfen konum bilgilerinizi kontrol edin"
+msgstr ""
+
+#: prefs.js
+msgid "İnternet bağlantınızı kontrol edin"
+msgstr ""
+
+#: prefs.js
+msgid "Şehir/Ülke: Şehir ve ülke adıyla konum belirler.\nEnlem/Boylam: GPS koordinatlarıyla. Daha hassas sonuç verir."
+msgstr ""
+
+#: prefs.js
+msgid "Ülke adını İngilizce girin.\nÖrnekler: Turkey, Germany, France, United Kingdom, Egypt"
+msgstr ""
+
+#: prefs.js
+msgid "Şehir adını İngilizce girin.\nÖrnekler: Istanbul, Berlin, Paris, London, Cairo"
+msgstr ""
+
+#: prefs.js
+msgid "Enlem değeri -90 ile 90 arasında olmalıdır.\nmaps.google.com adresinden koordinatlarınızı öğrenebilirsiniz."
+msgstr ""
+
+#: prefs.js
+msgid "Boylam değeri -180 ile 180 arasında olmalıdır.\nmaps.google.com adresinden koordinatlarınızı öğrenebilirsiniz."
+msgstr ""
+
+#: prefs.js
+msgid "Bölgenize uygun hesaplama yöntemini seçin.\nTürkiye: Diyanet İşleri Başkanlığı\nAvrupa: MWL veya ISNA\nKörfez: Umm Al-Qura"
+msgstr ""
+
+#: prefs.js
+msgid "Vakit girmeden belirtilen dakika kadar önce ön bildirim gönderilir."
+msgstr ""
+
+#: prefs.js
+msgid "Otomatik: Hicri takvime göre Ramazan ayını otomatik tespit eder.\nHer Zaman: Yıl boyunca sahur vaktini gösterir.\nKapalı: Sahur vaktini gizler."
+msgstr ""
+
+#: prefs.js
+msgid "İmsak vaktinden belirtilen dakika kadar önce sahur vakti başlar."
+msgstr ""
+
+#: prefs.js
+msgid "Gecenin son üçte birinden belirtilen dakika kadar kaydırır.\nNegatif: daha erken, Pozitif: daha geç."
+msgstr ""
+
+#: prefs.js
+msgid "Sonraki vakte bu kadar dakika veya daha az kaldığında panelde geri sayım başlar."
+msgstr ""

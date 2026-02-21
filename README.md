@@ -1,27 +1,32 @@
 # Praytime - GNOME Shell Extension
 
+> [English documentation](README.en.md)
+
 GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 
 ## Ekran Görüntüleri
 
 ### Panel Menüsü
 
-<img src="_img/ss1.png" width="200" height="507" alt="Panel Menüsü" />
+<img src="_img/tr/ss1.png" width="200" height="507" alt="Panel Menüsü" />
 
 ### Ayarlar
 
 | | |
 |:---:|:---:|
-| <img src="_img/ss2.png" width="380" height="348" alt="Konum Ayarları" /><br>**Konum Ayarları** | <img src="_img/ss3.png" width="380" height="348" alt="Bildirim Ayarları" /><br>**Bildirim Ayarları** |
-| <img src="_img/ss4.png" width="380" height="348" alt="Ek Vakitler" /><br>**Ek Vakitler** | <img src="_img/ss5.png" width="380" height="348" alt="Görünüm Ayarları" /><br>**Görünüm Ayarları** |
+| <img src="_img/tr/ss2.png" width="380" height="348" alt="Konum Ayarları" /><br>**Konum Ayarları** | <img src="_img/tr/ss3.png" width="380" height="348" alt="Bildirim Ayarları" /><br>**Bildirim Ayarları** |
+| <img src="_img/tr/ss4.png" width="380" height="348" alt="Ek Vakitler" /><br>**Ek Vakitler** | <img src="_img/tr/ss5.png" width="380" height="348" alt="Görünüm Ayarları" /><br>**Görünüm Ayarları** |
 
 ## Özellikler
 
 - Panel üzerinde sonraki namaz vakti ve geri sayım
 - 6 vakit desteği: İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı
-- Şehir arama ile konum seçimi (Diyanet API)
+- Türkçe ve İngilizce dil desteği (otomatik veya manuel seçim)
+- Dünya geneli konum desteği (şehir/ülke veya koordinat bazlı)
+- 24 farklı hesaplama metodu (Diyanet, ISNA, MWL, Umm Al-Qura vb.)
+- Türkiye illeri dropdown seçimi (81 il)
 - Vakit girişi ve öncesi bildirimleri
-- Türkçe arayüz
+- Teheccüd ve Sahur vakit desteği (otomatik Ramazan tespiti)
 - Clean Architecture mimari yapısı
 
 ## Gereksinimler
@@ -293,7 +298,7 @@ praytime@erho.dev/
 
 ## API
 
-Bu extension [prayertimes.api.abdus.dev](https://prayertimes.api.abdus.dev) API'sini kullanmaktadır.
+Bu extension [Aladhan Prayer Times API](https://aladhan.com/prayer-times-api) kullanmaktadır.
 
 ## Katkıda Bulunma
 

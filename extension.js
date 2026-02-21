@@ -1,16 +1,22 @@
+import GLib from 'gi://GLib';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { ServiceFactory } from './src/factory.js';
+import { createGettextWrapper } from './src/i18n/gettext.js';
+import { LOCATION_STATUS } from './src/config/constants.js';
 
 export default class PraytimeExtension extends Extension {
     enable() {
-        console.log('[Praytime] Extension etkinleştiriliyor...');
+        console.log('[Praytime] Enabling extension...');
 
         this._isEnabled = true;
+        this._debounceTimer = null;
         this._settings = this.getSettings();
 
-        this._factory = new ServiceFactory(this._settings, this);
+        const _ = createGettextWrapper(this._settings);
+
+        this._factory = new ServiceFactory(this._settings, this, _);
 
         this._notificationManager = this._factory.createNotificationManager();
         this._panelButton = this._factory.createPanelButton();
@@ -25,14 +31,19 @@ export default class PraytimeExtension extends Extension {
         this._service.start();
         this._connectSettings();
 
-        console.log('[Praytime] Extension etkinleştirildi');
+        console.log('[Praytime] Extension enabled');
     }
 
     disable() {
-        console.log('[Praytime] Extension devre dışı bırakılıyor...');
+        console.log('[Praytime] Disabling extension...');
 
         this._isEnabled = false;
         this._disconnectSettings();
+
+        if (this._debounceTimer) {
+            GLib.source_remove(this._debounceTimer);
+            this._debounceTimer = null;
+        }
 
         if (this._service) {
             this._service.destroy();
@@ -52,7 +63,7 @@ export default class PraytimeExtension extends Extension {
         this._notificationManager = null;
         this._settings = null;
 
-        console.log('[Praytime] Extension devre dışı bırakıldı');
+        console.log('[Praytime] Extension disabled');
     }
 
     _connectSettings() {
@@ -71,6 +82,29 @@ export default class PraytimeExtension extends Extension {
     _handleSettingChange(key) {
         if (!this._isEnabled) return;
 
+        // Validasyon status key'leri sonsuz döngü oluşturmamalı
+        const IGNORED_KEYS = ['location-status', 'location-status-message'];
+        if (IGNORED_KEYS.includes(key)) return;
+
+        // Metin girişi olan ayarlar için debounce
+        const DEBOUNCED_KEYS = ['city-name', 'country-name'];
+        if (DEBOUNCED_KEYS.includes(key)) {
+            if (this._debounceTimer) {
+                GLib.source_remove(this._debounceTimer);
+                this._debounceTimer = null;
+            }
+            this._settings.set_string('location-status', LOCATION_STATUS.UNKNOWN);
+            this._settings.set_string('location-status-message', '');
+            this._debounceTimer = GLib.timeout_add_seconds(
+                GLib.PRIORITY_DEFAULT, 2, () => {
+                    this._debounceTimer = null;
+                    this._restartService();
+                    return GLib.SOURCE_REMOVE;
+                }
+            );
+            return;
+        }
+
         const handlers = {
             // Görünüm ayarları
             'panel-position': () => this._repositionPanel(),
@@ -81,8 +115,11 @@ export default class PraytimeExtension extends Extension {
             'countdown-threshold-minutes': () => this._onUpdate(),
             // Konum ayarları
             'location-id': () => this._restartService(),
-            'city-name': () => this._restartService(),
+            'location-mode': () => this._restartService(),
             'region-name': () => this._restartService(),
+            'latitude': () => this._restartService(),
+            'longitude': () => this._restartService(),
+            'calculation-method': () => this._restartService(),
             // Bildirim ayarları
             'notifications-enabled': () => this._rescheduleNotifications(),
             'notify-before-minutes': () => this._rescheduleNotifications(),
@@ -93,6 +130,8 @@ export default class PraytimeExtension extends Extension {
             'ramadan-mode': () => this._refreshSchedule(),
             'tahajjud-enabled': () => this._refreshSchedule(),
             'tahajjud-offset-minutes': () => this._refreshSchedule(),
+            // Dil değişikliğinde panel ve service yeniden oluşturulur
+            'language': () => this._handleLanguageChange(),
         };
 
         handlers[key]?.();
@@ -109,14 +148,34 @@ export default class PraytimeExtension extends Extension {
     async _restartService() {
         if (!this._service) return;
 
+        this._settings.set_string('location-status', LOCATION_STATUS.UNKNOWN);
+        this._settings.set_string('location-status-message', '');
+
         this._service.stop();
         if (!this._isEnabled) return;
 
         try {
             await this._service.start();
         } catch (error) {
-            console.error(`[Praytime] Servis yeniden başlatılamadı: ${error.message}`);
+            console.error(`[Praytime] Service restart failed: ${error.message}`);
         }
+    }
+
+    async _handleLanguageChange() {
+        const newGettext = createGettextWrapper(this._settings);
+
+        this._factory.updateGettext(newGettext);
+
+        if (this._panelButton) {
+            this._panelButton.destroy();
+            this._panelButton = null;
+        }
+
+        this._panelButton = this._factory.createPanelButton();
+        const position = this._settings.get_string('panel-position');
+        Main.panel.addToStatusArea('praytime-indicator', this._panelButton, 0, position);
+
+        await this._restartService();
     }
 
     _repositionPanel() {
@@ -124,21 +183,18 @@ export default class PraytimeExtension extends Extension {
 
         if (!this._panelButton) return;
 
-        // Panel container'ını al
         const container = this._panelButton.container;
         if (!container) return;
 
-        // Mevcut parent box'tan çıkar
         const parent = container.get_parent();
         if (parent) {
             parent.remove_child(container);
         }
 
-        // Yeni box'a ekle (sona ekle - left'te Activities'ten sonra olur)
         const panelBox = Main.panel[`_${newPosition}Box`];
         panelBox.insert_child_at_index(container, -1);
 
-        console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
+        console.log(`[Praytime] Panel position changed: ${newPosition}`);
     }
 
     async refreshService() {
@@ -146,7 +202,7 @@ export default class PraytimeExtension extends Extension {
         try {
             await this._service.refresh();
         } catch (error) {
-            console.error(`[Praytime] Manuel yenileme hatası: ${error.message}`);
+            console.error(`[Praytime] Manual refresh error: ${error.message}`);
         }
     }
 

@@ -1,8 +1,8 @@
 // Uygulama sabitleri - DRY prensibi için merkezi tanımlama
 
 // Merkezi versiyon bilgisi
-export const APP_VERSION = '0.8.1';
-export const APP_VERSION_CODE = 21;
+export const APP_VERSION = '0.9.1';
+export const APP_VERSION_CODE = 23;
 export const APP_NAME = 'praytime@erho.dev';
 export const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 export const APP_DEVELOPER = '@erhanurgun';
@@ -10,20 +10,74 @@ export const APP_WEBSITE = 'https://erho.me';
 
 export const API_BASE_URL = 'https://api.aladhan.com';
 
-// Namaz vakitleri - Türkçe isim, İngilizce isim ve API key eşleşmesi
+// xgettext string işaretleme - modül yükleme zamanında güvenli
+const N_ = (s) => s;
+
+// Namaz vakitleri - id sabit tanımlayıcı, name çevrilecek display adı, apiKey API eşleme
 export const PRAYER_NAMES = [
-    { name: 'İmsak', nameEn: 'Imsak', apiKey: 'Imsak' },
-    { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'Sunrise' },
-    { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'Dhuhr' },
-    { name: 'İkindi', nameEn: 'Asr', apiKey: 'Asr' },
-    { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'Maghrib' },
-    { name: 'Yatsı', nameEn: 'Isha', apiKey: 'Isha' },
+    { id: 'imsak',   name: N_('İmsak'),   nameEn: 'Imsak',   apiKey: 'Imsak' },
+    { id: 'gunes',   name: N_('Güneş'),   nameEn: 'Sunrise',  apiKey: 'Sunrise' },
+    { id: 'ogle',    name: N_('Öğle'),    nameEn: 'Dhuhr',    apiKey: 'Dhuhr' },
+    { id: 'ikindi',  name: N_('İkindi'),  nameEn: 'Asr',      apiKey: 'Asr' },
+    { id: 'aksam',   name: N_('Akşam'),   nameEn: 'Maghrib',  apiKey: 'Maghrib' },
+    { id: 'yatsi',   name: N_('Yatsı'),   nameEn: 'Isha',     apiKey: 'Isha' },
 ];
 
 // Panel konumları
 export const PANEL_POSITIONS = {
     values: ['left', 'center', 'right'],
-    labels: ['Sol', 'Orta', 'Sağ'],
+    labels: [N_('Sol'), N_('Orta'), N_('Sağ')],
+};
+
+// Konum modları
+export const LOCATION_MODES = {
+    values: ['city', 'coordinates'],
+    labels: [N_('Şehir/Ülke'), N_('Enlem/Boylam')],
+};
+
+// Hesaplama metotları (Aladhan API)
+export const CALCULATION_METHODS = [
+    { id: 0,  name: 'Shia Ithna-Ashari, Leva Institute, Qum' },
+    { id: 1,  name: 'University of Islamic Sciences, Karachi' },
+    { id: 2,  name: 'Islamic Society of North America (ISNA)' },
+    { id: 3,  name: 'Muslim World League (MWL)' },
+    { id: 4,  name: 'Umm Al-Qura University, Makkah' },
+    { id: 5,  name: 'Egyptian General Authority of Survey' },
+    { id: 7,  name: 'Institute of Geophysics, University of Tehran' },
+    { id: 8,  name: 'Gulf Region' },
+    { id: 9,  name: 'Kuwait' },
+    { id: 10, name: 'Qatar' },
+    { id: 11, name: 'Majlis Ugama Islam Singapura' },
+    { id: 12, name: 'Union Organization Islamic de France' },
+    { id: 13, name: 'Diyanet İşleri Başkanlığı, Turkey' },
+    { id: 14, name: 'Spiritual Administration of Muslims of Russia' },
+    { id: 15, name: 'Moonsighting Committee Worldwide' },
+    { id: 16, name: 'Dubai' },
+    { id: 17, name: 'JAKIM, Malaysia' },
+    { id: 18, name: 'Tunisia' },
+    { id: 19, name: 'Algeria' },
+    { id: 20, name: 'Indonesia (KEMENAG)' },
+    { id: 21, name: 'Morocco' },
+    { id: 22, name: 'Comunidade Islamica de Lisboa' },
+    { id: 23, name: 'Ministry of Awqaf, Jordan' },
+    { id: 99, name: 'Custom' },
+];
+
+// Hata kodları - dahili sabitler, çeviriye tabi tutulmaz
+export const ERROR_CODES = {
+    INVALID_LOCATION: 'INVALID_LOCATION',
+};
+
+// Konum validasyon durumları - GSettings üzerinden prefs.js ↔ extension.js iletişimi
+export const LOCATION_STATUS = {
+    UNKNOWN: 'unknown',
+    VALID: 'valid',
+    INVALID_COUNTRY: 'invalid_country',
+    INVALID_CITY: 'invalid_city',
+    EMPTY_COUNTRY: 'empty_country',
+    EMPTY_CITY: 'empty_city',
+    NETWORK_ERROR: 'network_error',
+    API_ERROR: 'api_error',
 };
 
 // Yardımcı fonksiyonlar
@@ -34,9 +88,14 @@ export function getPrayerNamesList() {
 export function getPrayerApiKeyMap() {
     const map = {};
     for (const p of PRAYER_NAMES) {
-        map[p.name] = p.apiKey;
+        map[p.id] = p.apiKey;
     }
     return map;
+}
+
+// id üzerinden namaz bilgisi bul
+export function getPrayerById(id) {
+    return PRAYER_NAMES.find(p => p.id === id) || null;
 }
 
 // Mapping index dönüşümü için yardımcı
@@ -47,6 +106,15 @@ export function getIndexFromValue(mapping, value) {
 
 export function getValueFromIndex(mapping, index) {
     return mapping.values[index] || mapping.values[0];
+}
+
+// Hesaplama metodu yardımcıları
+export function getCalculationMethodIndex(methodId) {
+    return CALCULATION_METHODS.findIndex(m => m.id === methodId);
+}
+
+export function getCalculationMethodById(index) {
+    return CALCULATION_METHODS[index] || CALCULATION_METHODS.find(m => m.id === 13);
 }
 
 // Türkiye illeri listesi (81 il) - Alfabetik sıralı

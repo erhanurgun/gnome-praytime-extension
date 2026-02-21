@@ -1,13 +1,76 @@
 // Constants birim testleri
-// TURKEY_CITIES ve versiyon sabitleri
+// TURKEY_CITIES, PRAYER_NAMES, CALCULATION_METHODS, LOCATION_MODES, ERROR_CODES ve yardımcı fonksiyonlar
 
 // Constants'tan kopyalanan değerler (test için bağımsız)
-const APP_VERSION = '0.8.1';
-const APP_VERSION_CODE = 21;
+const APP_VERSION = '0.9.1';
+const APP_VERSION_CODE = 23;
 const APP_NAME = 'praytime@erho.dev';
 const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 const APP_DEVELOPER = '@erhanurgun';
 const APP_WEBSITE = 'https://erho.me';
+
+const N_ = (s) => s;
+
+const PRAYER_NAMES = [
+    { id: 'imsak',   name: N_('İmsak'),   nameEn: 'Imsak',   apiKey: 'Imsak' },
+    { id: 'gunes',   name: N_('Güneş'),   nameEn: 'Sunrise',  apiKey: 'Sunrise' },
+    { id: 'ogle',    name: N_('Öğle'),    nameEn: 'Dhuhr',    apiKey: 'Dhuhr' },
+    { id: 'ikindi',  name: N_('İkindi'),  nameEn: 'Asr',      apiKey: 'Asr' },
+    { id: 'aksam',   name: N_('Akşam'),   nameEn: 'Maghrib',  apiKey: 'Maghrib' },
+    { id: 'yatsi',   name: N_('Yatsı'),   nameEn: 'Isha',     apiKey: 'Isha' },
+];
+
+const PANEL_POSITIONS = {
+    values: ['left', 'center', 'right'],
+    labels: [N_('Sol'), N_('Orta'), N_('Sağ')],
+};
+
+const LOCATION_MODES = {
+    values: ['city', 'coordinates'],
+    labels: [N_('Şehir/Ülke'), N_('Enlem/Boylam')],
+};
+
+const CALCULATION_METHODS = [
+    { id: 0,  name: 'Shia Ithna-Ashari, Leva Institute, Qum' },
+    { id: 1,  name: 'University of Islamic Sciences, Karachi' },
+    { id: 2,  name: 'Islamic Society of North America (ISNA)' },
+    { id: 3,  name: 'Muslim World League (MWL)' },
+    { id: 4,  name: 'Umm Al-Qura University, Makkah' },
+    { id: 5,  name: 'Egyptian General Authority of Survey' },
+    { id: 7,  name: 'Institute of Geophysics, University of Tehran' },
+    { id: 8,  name: 'Gulf Region' },
+    { id: 9,  name: 'Kuwait' },
+    { id: 10, name: 'Qatar' },
+    { id: 11, name: 'Majlis Ugama Islam Singapura' },
+    { id: 12, name: 'Union Organization Islamic de France' },
+    { id: 13, name: 'Diyanet İşleri Başkanlığı, Turkey' },
+    { id: 14, name: 'Spiritual Administration of Muslims of Russia' },
+    { id: 15, name: 'Moonsighting Committee Worldwide' },
+    { id: 16, name: 'Dubai' },
+    { id: 17, name: 'JAKIM, Malaysia' },
+    { id: 18, name: 'Tunisia' },
+    { id: 19, name: 'Algeria' },
+    { id: 20, name: 'Indonesia (KEMENAG)' },
+    { id: 21, name: 'Morocco' },
+    { id: 22, name: 'Comunidade Islamica de Lisboa' },
+    { id: 23, name: 'Ministry of Awqaf, Jordan' },
+    { id: 99, name: 'Custom' },
+];
+
+const ERROR_CODES = {
+    INVALID_LOCATION: 'INVALID_LOCATION',
+};
+
+const LOCATION_STATUS = {
+    UNKNOWN: 'unknown',
+    VALID: 'valid',
+    INVALID_COUNTRY: 'invalid_country',
+    INVALID_CITY: 'invalid_city',
+    EMPTY_COUNTRY: 'empty_country',
+    EMPTY_CITY: 'empty_city',
+    NETWORK_ERROR: 'network_error',
+    API_ERROR: 'api_error',
+};
 
 const TURKEY_CITIES = [
     { id: 9146, name: 'Adana' },
@@ -108,6 +171,35 @@ function getCityIndexById(id) {
     return TURKEY_CITIES.findIndex(c => c.id === id);
 }
 
+function getPrayerById(id) {
+    return PRAYER_NAMES.find(p => p.id === id) || null;
+}
+
+function getPrayerApiKeyMap() {
+    const map = {};
+    for (const p of PRAYER_NAMES) {
+        map[p.id] = p.apiKey;
+    }
+    return map;
+}
+
+function getIndexFromValue(mapping, value) {
+    const index = mapping.values.indexOf(value);
+    return index >= 0 ? index : 0;
+}
+
+function getValueFromIndex(mapping, index) {
+    return mapping.values[index] || mapping.values[0];
+}
+
+function getCalculationMethodIndex(methodId) {
+    return CALCULATION_METHODS.findIndex(m => m.id === methodId);
+}
+
+function getCalculationMethodById(index) {
+    return CALCULATION_METHODS[index] || CALCULATION_METHODS.find(m => m.id === 13);
+}
+
 // Test yardımcısı
 let passedTests = 0;
 let failedTests = 0;
@@ -140,10 +232,10 @@ console.log('\n=== Constants Testleri ===\n');
 
 // Test 1: Versiyon sabitleri
 console.log('1. Versiyon Sabitleri:');
-assertEqual(APP_VERSION, '0.8.1', 'APP_VERSION doğru');
-assertEqual(APP_VERSION_CODE, 21, 'APP_VERSION_CODE doğru');
+assertEqual(APP_VERSION, '0.9.1', 'APP_VERSION doğru');
+assertEqual(APP_VERSION_CODE, 23, 'APP_VERSION_CODE doğru');
 assertEqual(APP_NAME, 'praytime@erho.dev', 'APP_NAME doğru');
-assertEqual(APP_USER_AGENT, 'praytime@erho.dev/0.8.1', 'APP_USER_AGENT doğru format');
+assertEqual(APP_USER_AGENT, 'praytime@erho.dev/0.9.1', 'APP_USER_AGENT doğru format');
 assertEqual(APP_DEVELOPER, '@erhanurgun', 'APP_DEVELOPER doğru');
 assertEqual(APP_WEBSITE, 'https://erho.me', 'APP_WEBSITE doğru');
 
@@ -200,6 +292,114 @@ console.log('\n8. İsim Benzersizlik Testi:');
 const names = TURKEY_CITIES.map(c => c.name);
 const uniqueNames = new Set(names);
 assertEqual(names.length, uniqueNames.size, 'Tüm il isimleri benzersiz');
+
+// Test 9: PRAYER_NAMES - id alanı
+console.log('\n9. PRAYER_NAMES - ID Alanı Testleri:');
+assertEqual(PRAYER_NAMES.length, 6, '6 namaz vakti tanımlı');
+assertEqual(PRAYER_NAMES[0].id, 'imsak', 'İlk vakit id\'si imsak');
+assertEqual(PRAYER_NAMES[0].name, 'İmsak', 'İlk vakit adı İmsak');
+assertEqual(PRAYER_NAMES[0].apiKey, 'Imsak', 'İlk vakit apiKey\'i Imsak');
+assertEqual(PRAYER_NAMES[5].id, 'yatsi', 'Son vakit id\'si yatsi');
+
+// id'lerin benzersizliği
+const prayerIds = PRAYER_NAMES.map(p => p.id);
+const uniquePrayerIds = new Set(prayerIds);
+assertEqual(prayerIds.length, uniquePrayerIds.size, 'Tüm namaz vakti id\'leri benzersiz');
+
+// Test 10: getPrayerById fonksiyonu
+console.log('\n10. getPrayerById Testleri:');
+const imsak = getPrayerById('imsak');
+assertEqual(imsak.name, 'İmsak', 'getPrayerById imsak doğru');
+assertEqual(imsak.apiKey, 'Imsak', 'getPrayerById apiKey doğru');
+
+const ogle = getPrayerById('ogle');
+assertEqual(ogle.name, 'Öğle', 'getPrayerById ogle doğru');
+
+const notFound = getPrayerById('nonexistent');
+assertEqual(notFound, null, 'Bilinmeyen id null döner');
+
+// Test 11: getPrayerApiKeyMap fonksiyonu
+console.log('\n11. getPrayerApiKeyMap Testleri:');
+const apiKeyMap = getPrayerApiKeyMap();
+assertEqual(apiKeyMap['imsak'], 'Imsak', 'API key map imsak -> Imsak');
+assertEqual(apiKeyMap['gunes'], 'Sunrise', 'API key map gunes -> Sunrise');
+assertEqual(apiKeyMap['ogle'], 'Dhuhr', 'API key map ogle -> Dhuhr');
+assertEqual(apiKeyMap['ikindi'], 'Asr', 'API key map ikindi -> Asr');
+assertEqual(apiKeyMap['aksam'], 'Maghrib', 'API key map aksam -> Maghrib');
+assertEqual(apiKeyMap['yatsi'], 'Isha', 'API key map yatsi -> Isha');
+assertEqual(Object.keys(apiKeyMap).length, 6, 'API key map 6 giriş içerir');
+
+// Test 12: CALCULATION_METHODS
+console.log('\n12. CALCULATION_METHODS Testleri:');
+assertEqual(CALCULATION_METHODS.length, 24, '24 hesaplama metodu tanımlı');
+assertEqual(CALCULATION_METHODS[0].id, 0, 'İlk metot id\'si 0');
+const diyanet = CALCULATION_METHODS.find(m => m.id === 13);
+assert(diyanet !== undefined, 'Diyanet metodu (id=13) mevcut');
+assert(diyanet.name.includes('Diyanet'), 'Diyanet metodu adı doğru');
+const custom = CALCULATION_METHODS.find(m => m.id === 99);
+assert(custom !== undefined, 'Custom metot (id=99) mevcut');
+
+// id benzersizliği
+const methodIds = CALCULATION_METHODS.map(m => m.id);
+const uniqueMethodIds = new Set(methodIds);
+assertEqual(methodIds.length, uniqueMethodIds.size, 'Tüm metot id\'leri benzersiz');
+
+// Test 13: LOCATION_MODES
+console.log('\n13. LOCATION_MODES Testleri:');
+assertEqual(LOCATION_MODES.values.length, 2, '2 konum modu');
+assertEqual(LOCATION_MODES.values[0], 'city', 'İlk mod city');
+assertEqual(LOCATION_MODES.values[1], 'coordinates', 'İkinci mod coordinates');
+assertEqual(LOCATION_MODES.labels.length, 2, '2 etiket');
+
+// Test 14: ERROR_CODES
+console.log('\n14. ERROR_CODES Testleri:');
+assertEqual(ERROR_CODES.INVALID_LOCATION, 'INVALID_LOCATION', 'INVALID_LOCATION sabiti doğru');
+
+// Test 14b: LOCATION_STATUS
+console.log('\n14b. LOCATION_STATUS Testleri:');
+assertEqual(LOCATION_STATUS.UNKNOWN, 'unknown', 'UNKNOWN sabiti doğru');
+assertEqual(LOCATION_STATUS.VALID, 'valid', 'VALID sabiti doğru');
+assertEqual(LOCATION_STATUS.INVALID_COUNTRY, 'invalid_country', 'INVALID_COUNTRY sabiti doğru');
+assertEqual(LOCATION_STATUS.INVALID_CITY, 'invalid_city', 'INVALID_CITY sabiti doğru');
+assertEqual(LOCATION_STATUS.EMPTY_COUNTRY, 'empty_country', 'EMPTY_COUNTRY sabiti doğru');
+assertEqual(LOCATION_STATUS.EMPTY_CITY, 'empty_city', 'EMPTY_CITY sabiti doğru');
+assertEqual(LOCATION_STATUS.NETWORK_ERROR, 'network_error', 'NETWORK_ERROR sabiti doğru');
+assertEqual(LOCATION_STATUS.API_ERROR, 'api_error', 'API_ERROR sabiti doğru');
+assertEqual(Object.keys(LOCATION_STATUS).length, 8, 'LOCATION_STATUS 8 durum içerir');
+
+// Test 15: getIndexFromValue ve getValueFromIndex
+console.log('\n15. Index/Value Dönüşüm Testleri:');
+assertEqual(getIndexFromValue(PANEL_POSITIONS, 'left'), 0, 'left index 0');
+assertEqual(getIndexFromValue(PANEL_POSITIONS, 'center'), 1, 'center index 1');
+assertEqual(getIndexFromValue(PANEL_POSITIONS, 'right'), 2, 'right index 2');
+assertEqual(getIndexFromValue(PANEL_POSITIONS, 'unknown'), 0, 'bilinmeyen değer varsayılan 0');
+
+assertEqual(getValueFromIndex(PANEL_POSITIONS, 0), 'left', 'index 0 = left');
+assertEqual(getValueFromIndex(PANEL_POSITIONS, 1), 'center', 'index 1 = center');
+assertEqual(getValueFromIndex(PANEL_POSITIONS, 2), 'right', 'index 2 = right');
+assertEqual(getValueFromIndex(PANEL_POSITIONS, 99), 'left', 'geçersiz index varsayılan left');
+
+assertEqual(getIndexFromValue(LOCATION_MODES, 'city'), 0, 'city index 0');
+assertEqual(getIndexFromValue(LOCATION_MODES, 'coordinates'), 1, 'coordinates index 1');
+assertEqual(getValueFromIndex(LOCATION_MODES, 0), 'city', 'index 0 = city');
+assertEqual(getValueFromIndex(LOCATION_MODES, 1), 'coordinates', 'index 1 = coordinates');
+
+// Test 16: getCalculationMethodIndex ve getCalculationMethodById
+console.log('\n16. Hesaplama Metodu Yardımcı Testleri:');
+const diyanetIndex = getCalculationMethodIndex(13);
+assert(diyanetIndex >= 0, 'Diyanet metodu index\'i bulunur');
+assertEqual(CALCULATION_METHODS[diyanetIndex].id, 13, 'Index ile Diyanet metodu erişilir');
+
+const isnaIndex = getCalculationMethodIndex(2);
+assert(isnaIndex >= 0, 'ISNA metodu index\'i bulunur');
+
+assertEqual(getCalculationMethodIndex(999), -1, 'Bilinmeyen metot -1 döner');
+
+const methodByIdx = getCalculationMethodById(diyanetIndex);
+assertEqual(methodByIdx.id, 13, 'getCalculationMethodById doğru metot döner');
+
+const fallbackMethod = getCalculationMethodById(999);
+assertEqual(fallbackMethod.id, 13, 'Geçersiz index Diyanet\'e geri düşer');
 
 // Sonuç
 console.log('\n=== Sonuç ===');
