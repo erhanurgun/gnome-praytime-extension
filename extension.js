@@ -88,10 +88,11 @@ export default class PraytimeExtension extends Extension {
             'notify-before-minutes': () => this._rescheduleNotifications(),
             'notify-on-time': () => this._rescheduleNotifications(),
             // Ek vakit ayarları
-            'sahur-enabled': () => this._restartService(),
-            'sahur-minutes-before': () => this._restartService(),
-            'ramadan-mode': () => this._restartService(),
-            'tahajjud-enabled': () => this._restartService(),
+            'sahur-enabled': () => this._refreshSchedule(),
+            'sahur-minutes-before': () => this._refreshSchedule(),
+            'ramadan-mode': () => this._refreshSchedule(),
+            'tahajjud-enabled': () => this._refreshSchedule(),
+            'tahajjud-offset-minutes': () => this._refreshSchedule(),
         };
 
         handlers[key]?.();
@@ -99,6 +100,10 @@ export default class PraytimeExtension extends Extension {
 
     _rescheduleNotifications() {
         this._service?.rescheduleNotifications();
+    }
+
+    _refreshSchedule() {
+        this._service?.recalculateSchedule();
     }
 
     async _restartService() {

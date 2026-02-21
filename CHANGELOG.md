@@ -2,6 +2,45 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.8.1] - 2026-02-21
+
+### Eklendi
+- Teheccüd ofseti ayarı (gecenin son 1/3'ünden -60 ile +60 dakika kaydırma)
+
+### Düzeltildi
+- Ek vakit ayarı değişikliklerinde panelin güncellenmemesi düzeltildi (race condition)
+
+### Teknik
+- recalculateSchedule(): Ayar değişikliğinde API çağrısı yapmadan önbellekten yeniden hesaplama
+- _lastApiResponse: API yanıt önbelleği, gereksiz ağ isteklerini önler
+- _refreshSchedule(): Önbellekli yanıtla panel ve bildirimleri günceller
+
+## [0.8.0] - 2026-02-21
+
+### Eklendi
+- Teheccüd ve Sahur vakit desteği
+- Otomatik Ramazan tespiti (Hicri takvim kontrolü)
+- Preferences UI: Ek Vakitler bölümü (Sahur/Teheccüd toggle'ları)
+
+### Teknik
+- _addExtraPrayers(): Sahur (İmsak - 10dk) ve Teheccüd (gecenin son 1/3) hesaplaması
+- insertPrayer(): Kronolojik sıraya vakit ekleme
+- 5 yeni gschema key: show-sahur, show-tahajjud, sahur-offset, tahajjud-offset, ramadan-auto-detect
+
+## [0.7.0] - 2026-02-21
+
+### Değişti
+- API kaynağı api.aladhan.com'a taşındı (method=13, Diyanet İşleri Başkanlığı)
+- fetchPrayerTimes() artık Location nesnesi alıyor (şehir ID yerine koordinat tabanlı)
+
+### Düzeltildi
+- _refreshInFlight flag düzeltmesi (eşzamanlı refresh isteklerinde kilitleme sorunu)
+
+### Teknik
+- AladhanApiClient: Yeni API istemcisi (method=13 Diyanet parametresi)
+- Location nesnesi: { latitude, longitude, city } yapısı
+- _refreshInFlight: Boolean flag ile çoklu refresh önleme
+
 ## [0.6.3] - 2026-01-16
 
 ### Düzeltildi

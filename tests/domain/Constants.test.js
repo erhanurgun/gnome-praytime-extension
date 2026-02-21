@@ -2,8 +2,8 @@
 // TURKEY_CITIES ve versiyon sabitleri
 
 // Constants'tan kopyalanan değerler (test için bağımsız)
-const APP_VERSION = '0.8.0';
-const APP_VERSION_CODE = 20;
+const APP_VERSION = '0.8.1';
+const APP_VERSION_CODE = 21;
 const APP_NAME = 'praytime@erho.dev';
 const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 const APP_DEVELOPER = '@erhanurgun';
@@ -140,10 +140,10 @@ console.log('\n=== Constants Testleri ===\n');
 
 // Test 1: Versiyon sabitleri
 console.log('1. Versiyon Sabitleri:');
-assertEqual(APP_VERSION, '0.8.0', 'APP_VERSION doğru');
-assertEqual(APP_VERSION_CODE, 20, 'APP_VERSION_CODE doğru');
+assertEqual(APP_VERSION, '0.8.1', 'APP_VERSION doğru');
+assertEqual(APP_VERSION_CODE, 21, 'APP_VERSION_CODE doğru');
 assertEqual(APP_NAME, 'praytime@erho.dev', 'APP_NAME doğru');
-assertEqual(APP_USER_AGENT, 'praytime@erho.dev/0.8.0', 'APP_USER_AGENT doğru format');
+assertEqual(APP_USER_AGENT, 'praytime@erho.dev/0.8.1', 'APP_USER_AGENT doğru format');
 assertEqual(APP_DEVELOPER, '@erhanurgun', 'APP_DEVELOPER doğru');
 assertEqual(APP_WEBSITE, 'https://erho.me', 'APP_WEBSITE doğru');
 
