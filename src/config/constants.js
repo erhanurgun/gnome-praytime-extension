@@ -1,8 +1,8 @@
 // Uygulama sabitleri - DRY prensibi için merkezi tanımlama
 
 // Merkezi versiyon bilgisi
-export const APP_VERSION = '0.9.0';
-export const APP_VERSION_CODE = 22;
+export const APP_VERSION = '0.9.1';
+export const APP_VERSION_CODE = 23;
 export const APP_NAME = 'praytime@erho.dev';
 export const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 export const APP_DEVELOPER = '@erhanurgun';
@@ -66,6 +66,18 @@ export const CALCULATION_METHODS = [
 // Hata kodları - dahili sabitler, çeviriye tabi tutulmaz
 export const ERROR_CODES = {
     INVALID_LOCATION: 'INVALID_LOCATION',
+};
+
+// Konum validasyon durumları - GSettings üzerinden prefs.js ↔ extension.js iletişimi
+export const LOCATION_STATUS = {
+    UNKNOWN: 'unknown',
+    VALID: 'valid',
+    INVALID_COUNTRY: 'invalid_country',
+    INVALID_CITY: 'invalid_city',
+    EMPTY_COUNTRY: 'empty_country',
+    EMPTY_CITY: 'empty_city',
+    NETWORK_ERROR: 'network_error',
+    API_ERROR: 'api_error',
 };
 
 // Yardımcı fonksiyonlar

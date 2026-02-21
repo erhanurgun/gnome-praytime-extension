@@ -159,5 +159,18 @@
       <range min="-60" max="60"/>
     </key>
 
+    <!-- Konum Validasyon Durumu (prefs.js ↔ extension.js iletişim kanalı) -->
+    <key name="location-status" type="s">
+      <default>'unknown'</default>
+      <summary>Location validation status</summary>
+      <description>Current location validation state: unknown, valid, invalid_country, invalid_city, empty_country, empty_city, network_error, api_error</description>
+    </key>
+
+    <key name="location-status-message" type="s">
+      <default>''</default>
+      <summary>Location validation error detail</summary>
+      <description>Human-readable error message for the current location validation status</description>
+    </key>
+
   </schema>
 </schemalist>
