@@ -14,6 +14,18 @@ const ERROR_CODES = {
     INVALID_LOCATION: 'INVALID_LOCATION',
 };
 
+// Konum validasyon durumları
+const LOCATION_STATUS = {
+    UNKNOWN: 'unknown',
+    VALID: 'valid',
+    INVALID_COUNTRY: 'invalid_country',
+    INVALID_CITY: 'invalid_city',
+    EMPTY_COUNTRY: 'empty_country',
+    EMPTY_CITY: 'empty_city',
+    NETWORK_ERROR: 'network_error',
+    API_ERROR: 'api_error',
+};
+
 // PrayerTime sınıfının kopyası - id parametresi eklendi
 class PrayerTime {
     constructor(id, name, nameEn, time) {
@@ -347,13 +359,27 @@ class PrayerTimeService {
         this._refreshInFlight = true;
 
         try {
-            this._location = this._locationProvider.getLocation();
-
-            if (!this._location?.isValid()) {
+            const preStatus = this._preValidateLocation();
+            if (preStatus) {
+                this._writeLocationStatus(preStatus.code, preStatus.message);
                 throw new Error(ERROR_CODES.INVALID_LOCATION);
             }
 
-            const apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
+            this._location = this._locationProvider.getLocation();
+
+            if (!this._location?.isValid()) {
+                this._writeLocationStatus(LOCATION_STATUS.API_ERROR, _('Geçersiz konum bilgisi'));
+                throw new Error(ERROR_CODES.INVALID_LOCATION);
+            }
+
+            let apiResponse;
+            try {
+                apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
+            } catch (apiError) {
+                const status = this._classifyApiError(apiError);
+                this._writeLocationStatus(status.code, status.message);
+                throw apiError;
+            }
             if (!this._isRunning) return;
 
             this._lastApiResponse = apiResponse;
@@ -365,6 +391,7 @@ class PrayerTimeService {
                 (title, body) => this._onNotification?.(title, body)
             );
 
+            this._writeLocationStatus(LOCATION_STATUS.VALID, '');
             this._triggerUpdate();
         } finally {
             this._refreshInFlight = false;
@@ -454,6 +481,39 @@ class PrayerTimeService {
 
     _triggerUpdate() {
         this._onUpdate?.();
+    }
+
+    _writeLocationStatus(code, message) {
+        if (!this._settings) return;
+        try {
+            this._settings.set_string('location-status', code);
+            this._settings.set_string('location-status-message', message || '');
+        } catch (e) {
+            // sessiz hata
+        }
+    }
+
+    _preValidateLocation() {
+        if (!this._settings) return null;
+        const mode = this._settings.get_string('location-mode');
+        if (mode === 'city') {
+            const country = this._settings.get_string('country-name');
+            const city = this._settings.get_string('city-name');
+            if (!country?.trim())
+                return { code: LOCATION_STATUS.EMPTY_COUNTRY, message: _('Ülke adı girilmedi') };
+            if (!city?.trim())
+                return { code: LOCATION_STATUS.EMPTY_CITY, message: _('Şehir adı girilmedi') };
+        }
+        return null;
+    }
+
+    _classifyApiError(error) {
+        const msg = error.message || '';
+        if (msg.includes('400') || msg.includes('404') || msg.includes('Invalid API'))
+            return { code: LOCATION_STATUS.INVALID_CITY, message: _('Girilen şehir veya ülke bulunamadı') };
+        if (msg.includes('Network') || msg.includes('resolve') || msg.includes('Cancelled'))
+            return { code: LOCATION_STATUS.NETWORK_ERROR, message: _('Ağ bağlantısı hatası') };
+        return { code: LOCATION_STATUS.API_ERROR, message: msg };
     }
 
     destroy() {
@@ -979,6 +1039,74 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     await service30.start();
     const sahur30 = service30.schedule.getPrayerById('sahur');
     assertEqual(sahur30, undefined, 'hijriMonth=null ile auto modda Sahur eklenmez');
+
+    // Test 31: Başarılı API → location-status = 'valid'
+    console.log('\n31. Başarılı API - Status Valid:');
+    const settings31 = new MockSettings();
+    const { service: service31 } = createService({ settings: settings31 });
+    await service31.start();
+    assertEqual(settings31.get_string('location-status'), 'valid', 'Başarılı API sonrası status = valid');
+    assertEqual(settings31.get_string('location-status-message'), '', 'Başarılı sonrası mesaj boş');
+
+    // Test 32: Boş ülke → location-status = 'empty_country'
+    console.log('\n32. Boş Ülke - Status Empty Country:');
+    const settings32 = new MockSettings({ 'country-name': '', 'city-name': 'Istanbul' });
+    const { service: service32 } = createService({ settings: settings32 });
+    await service32.start();
+    assertEqual(settings32.get_string('location-status'), 'empty_country', 'Boş ülke → empty_country');
+
+    // Test 33: Boş şehir → location-status = 'empty_city'
+    console.log('\n33. Boş Şehir - Status Empty City:');
+    const settings33 = new MockSettings({ 'country-name': 'Turkey', 'city-name': '' });
+    const { service: service33 } = createService({ settings: settings33 });
+    await service33.start();
+    assertEqual(settings33.get_string('location-status'), 'empty_city', 'Boş şehir → empty_city');
+
+    // Test 34: API 400 hatası → location-status = 'invalid_city'
+    console.log('\n34. API 400 Hatası - Status Invalid City:');
+    const settings34 = new MockSettings();
+    const badApi34 = new MockApiClient();
+    badApi34.setError(true, 'HTTP 400 Bad Request');
+    const { service: service34 } = createService({ settings: settings34, apiClient: badApi34 });
+    await service34.start();
+    assertEqual(settings34.get_string('location-status'), 'invalid_city', 'API 400 → invalid_city');
+
+    // Test 35: Ağ hatası → location-status = 'network_error'
+    console.log('\n35. Ağ Hatası - Status Network Error:');
+    const settings35 = new MockSettings();
+    const netApi35 = new MockApiClient();
+    netApi35.setError(true, 'Network error: Could not resolve host');
+    const { service: service35 } = createService({ settings: settings35, apiClient: netApi35 });
+    await service35.start();
+    assertEqual(settings35.get_string('location-status'), 'network_error', 'Ağ hatası → network_error');
+
+    // Test 36: API format hatası → location-status = 'api_error'
+    console.log('\n36. API Format Hatası - Status API Error:');
+    const settings36 = new MockSettings();
+    const fmtApi36 = new MockApiClient();
+    fmtApi36.setError(true, 'Unexpected response format');
+    const { service: service36 } = createService({ settings: settings36, apiClient: fmtApi36 });
+    await service36.start();
+    assertEqual(settings36.get_string('location-status'), 'api_error', 'Bilinmeyen hata → api_error');
+
+    // Test 37: Settings null iken status yazma → hata vermemeli
+    console.log('\n37. Settings Null - Status Yazma Güvenliği:');
+    const { service: service37 } = createService();
+    service37._settings = null;
+    service37._writeLocationStatus('valid', '');
+    assert(true, 'settings=null iken _writeLocationStatus hata vermez');
+
+    // Test 38: Konum değişikliğinde status sıfırlanmalı (pre-validation öncesi)
+    console.log('\n38. Konum Değişikliğinde Status Sıfırlama:');
+    const settings38 = new MockSettings();
+    const { service: service38 } = createService({ settings: settings38 });
+    await service38.start();
+    assertEqual(settings38.get_string('location-status'), 'valid', 'Önce valid');
+    // Ülkeyi boşalt ve tekrar start
+    settings38.set_string('country-name', '');
+    service38.stop();
+    await service38.start();
+    assertEqual(settings38.get_string('location-status'), 'empty_country', 'Boş ülke sonrası empty_country');
 
     // Sonuç
     console.log('\n=== Sonuç ===');

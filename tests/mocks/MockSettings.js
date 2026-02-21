@@ -3,9 +3,9 @@
 class MockSettings {
     constructor(initialValues = {}) {
         this._values = {
-            'location-id': 0,
-            'city-name': '',
-            'region-name': '',
+            'location-id': 9185,
+            'city-name': 'Agri',
+            'region-name': 'Agri',
             'location-mode': 'city',
             'country-name': 'Turkey',
             'latitude': 39.9334,
@@ -21,6 +21,8 @@ class MockSettings {
             'notify-before-minutes': 5,
             'notify-on-time': true,
             'notification-sound': true,
+            'location-status': 'unknown',
+            'location-status-message': '',
             ...initialValues
         };
     }
@@ -72,15 +74,17 @@ class MockSettings {
 
     reset() {
         this._values = {
-            'location-id': 0,
-            'city-name': '',
-            'region-name': '',
+            'location-id': 9185,
+            'city-name': 'Agri',
+            'region-name': 'Agri',
             'location-mode': 'city',
             'country-name': 'Turkey',
             'latitude': 39.9334,
             'longitude': 32.8597,
             'calculation-method': 13,
             'language': 'tr',
+            'location-status': 'unknown',
+            'location-status-message': '',
         };
     }
 }
