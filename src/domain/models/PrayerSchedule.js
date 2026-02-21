@@ -16,19 +16,19 @@ export class PrayerSchedule {
         return this._date;
     }
 
-    // API verisinden schedule oluştur
-    static fromApiResponse(data, date = new Date()) {
-        // PRAYER_NAMES sabitini kullan - key olarak Türkçe isim kullanılıyor
-        // çünkü API client'tan gelen data Türkçe key'ler içeriyor
+    // API verisinden schedule oluştur - id bazlı eşleme
+    static fromApiResponse(data, date = new Date(), gettext = null) {
+        const _ = gettext || ((s) => s);
+
         const prayers = PRAYER_NAMES.map(p => {
-            const timeStr = data[p.name];
+            const timeStr = data[p.id];
             if (!timeStr) return null;
 
             const [hours, minutes] = timeStr.split(':').map(Number);
             const prayerDate = new Date(date);
             prayerDate.setHours(hours, minutes, 0, 0);
 
-            return new PrayerTime(p.name, p.nameEn, prayerDate);
+            return new PrayerTime(p.id, _(p.name), p.nameEn, prayerDate);
         }).filter(p => p !== null);
 
         const schedule = new PrayerSchedule(prayers);
@@ -43,7 +43,6 @@ export class PrayerSchedule {
                 return prayer;
             }
         }
-        // Tüm vakitler geçtiyse null dön (yarın için yeni veri gerekli)
         return null;
     }
 
@@ -70,7 +69,12 @@ export class PrayerSchedule {
         }
     }
 
-    // Belirli vakti isimle bul
+    // Belirli vakti id ile bul
+    getPrayerById(id) {
+        return this._prayers.find(p => p.id === id);
+    }
+
+    // Belirli vakti isimle bul (geriye dönük uyumluluk)
     getPrayerByName(name) {
         return this._prayers.find(p => p.name === name || p.nameEn === name);
     }
