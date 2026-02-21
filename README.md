@@ -1,5 +1,7 @@
 # Praytime - GNOME Shell Extension
 
+> [English documentation](README.en.md)
+
 GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 
 ## Ekran Görüntüleri
@@ -19,9 +21,12 @@ GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 
 - Panel üzerinde sonraki namaz vakti ve geri sayım
 - 6 vakit desteği: İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı
-- Şehir arama ile konum seçimi (Diyanet API)
+- Türkçe ve İngilizce dil desteği (otomatik veya manuel seçim)
+- Dünya geneli konum desteği (şehir/ülke veya koordinat bazlı)
+- 24 farklı hesaplama metodu (Diyanet, ISNA, MWL, Umm Al-Qura vb.)
+- Türkiye illeri dropdown seçimi (81 il)
 - Vakit girişi ve öncesi bildirimleri
-- Türkçe arayüz
+- Teheccüd ve Sahur vakit desteği (otomatik Ramazan tespiti)
 - Clean Architecture mimari yapısı
 
 ## Gereksinimler
@@ -293,7 +298,7 @@ praytime@erho.dev/
 
 ## API
 
-Bu extension [prayertimes.api.abdus.dev](https://prayertimes.api.abdus.dev) API'sini kullanmaktadır.
+Bu extension [Aladhan Prayer Times API](https://aladhan.com/prayer-times-api) kullanmaktadır.
 
 ## Katkıda Bulunma
 
