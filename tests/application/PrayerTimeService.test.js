@@ -1,20 +1,29 @@
 // PrayerTimeService entegrasyon testleri
 // GLib/GObject bağımlılığı olmadan çalışır
 
+require('../helpers/polyfills.js');
+
 const { MockApiClient } = require('../mocks/MockApiClient.js');
 const { MockLocationProvider, Location } = require('../mocks/MockLocationProvider.js');
 const { MockNotificationScheduler } = require('../mocks/MockNotificationScheduler.js');
 const { MockTimerAdapter } = require('../mocks/MockTimerAdapter.js');
 const { MockSettings } = require('../mocks/MockSettings.js');
 
-// PrayerTime sınıfının kopyası
+// Hata kodları
+const ERROR_CODES = {
+    INVALID_LOCATION: 'INVALID_LOCATION',
+};
+
+// PrayerTime sınıfının kopyası - id parametresi eklendi
 class PrayerTime {
-    constructor(name, nameEn, time) {
+    constructor(id, name, nameEn, time) {
+        this._id = id;
         this._name = name;
         this._nameEn = nameEn;
         this._time = time instanceof Date ? time : new Date(time);
     }
 
+    get id() { return this._id; }
     get name() { return this._name; }
     get nameEn() { return this._nameEn; }
     get time() { return this._time; }
@@ -34,17 +43,17 @@ class PrayerTime {
     }
 }
 
-// PRAYER_NAMES sabiti
+// PRAYER_NAMES sabiti - id bazlı
 const PRAYER_NAMES = [
-    { name: 'İmsak', nameEn: 'Imsak', apiKey: 'Imsak' },
-    { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'Sunrise' },
-    { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'Dhuhr' },
-    { name: 'İkindi', nameEn: 'Asr', apiKey: 'Asr' },
-    { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'Maghrib' },
-    { name: 'Yatsı', nameEn: 'Isha', apiKey: 'Isha' },
+    { id: 'imsak',   name: 'İmsak',   nameEn: 'Imsak',   apiKey: 'Imsak' },
+    { id: 'gunes',   name: 'Güneş',   nameEn: 'Sunrise',  apiKey: 'Sunrise' },
+    { id: 'ogle',    name: 'Öğle',    nameEn: 'Dhuhr',    apiKey: 'Dhuhr' },
+    { id: 'ikindi',  name: 'İkindi',  nameEn: 'Asr',      apiKey: 'Asr' },
+    { id: 'aksam',   name: 'Akşam',   nameEn: 'Maghrib',  apiKey: 'Maghrib' },
+    { id: 'yatsi',   name: 'Yatsı',   nameEn: 'Isha',     apiKey: 'Isha' },
 ];
 
-// PrayerSchedule sınıfının kopyası
+// PrayerSchedule sınıfının kopyası - id bazlı eşleme, gettext desteği
 class PrayerSchedule {
     constructor(prayers = []) {
         this._prayers = prayers;
@@ -54,16 +63,18 @@ class PrayerSchedule {
     get prayers() { return this._prayers; }
     get date() { return this._date; }
 
-    static fromApiResponse(data, date = new Date()) {
+    static fromApiResponse(data, date = new Date(), gettext = null) {
+        const _ = gettext || ((s) => s);
+
         const prayers = PRAYER_NAMES.map(p => {
-            const timeStr = data[p.name];
+            const timeStr = data[p.id];
             if (!timeStr) return null;
 
             const [hours, minutes] = timeStr.split(':').map(Number);
             const prayerDate = new Date(date);
             prayerDate.setHours(hours, minutes, 0, 0);
 
-            return new PrayerTime(p.name, p.nameEn, prayerDate);
+            return new PrayerTime(p.id, _(p.name), p.nameEn, prayerDate);
         }).filter(p => p !== null);
 
         const schedule = new PrayerSchedule(prayers);
@@ -99,6 +110,10 @@ class PrayerSchedule {
         } else {
             this._prayers.splice(index, 0, prayer);
         }
+    }
+
+    getPrayerById(id) {
+        return this._prayers.find(p => p.id === id);
     }
 
     getPrayerByName(name) {
@@ -219,7 +234,9 @@ class MockTimerManager {
     }
 }
 
-// PrayerTimeService sınıfının kopyası (test için bağımsız)
+// PrayerTimeService sınıfının kopyası (test için bağımsız) - gettext + ERROR_CODES + id bazlı
+let _ = (s) => s;
+
 class PrayerTimeService {
     constructor(dependencies) {
         const {
@@ -229,7 +246,8 @@ class PrayerTimeService {
             notificationScheduler,
             settings,
             onUpdate,
-            onNotification
+            onNotification,
+            gettext
         } = dependencies;
 
         this._apiClient = apiClient;
@@ -240,12 +258,15 @@ class PrayerTimeService {
         this._onUpdate = onUpdate;
         this._onNotification = onNotification;
 
+        if (gettext) _ = gettext;
+
         this._schedule = null;
         this._location = null;
         this._isRunning = false;
         this._refreshScheduled = false;
         this._retryCount = 0;
         this._refreshInFlight = false;
+        this._lastApiResponse = null;
     }
 
     get schedule() {
@@ -296,6 +317,7 @@ class PrayerTimeService {
         this._notificationScheduler.clearAll();
         this._schedule = null;
         this._location = null;
+        this._lastApiResponse = null;
     }
 
     async refresh() {
@@ -314,7 +336,7 @@ class PrayerTimeService {
             if (!this._isRunning) return;
             this._schedule = null;
             this._triggerUpdate();
-            if (error.message !== 'Geçersiz konum') {
+            if (error.message !== ERROR_CODES.INVALID_LOCATION) {
                 this._scheduleRetry();
             }
         }
@@ -328,13 +350,14 @@ class PrayerTimeService {
             this._location = this._locationProvider.getLocation();
 
             if (!this._location?.isValid()) {
-                throw new Error('Geçersiz konum');
+                throw new Error(ERROR_CODES.INVALID_LOCATION);
             }
 
             const apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
             if (!this._isRunning) return;
 
-            this._schedule = PrayerSchedule.fromApiResponse(apiResponse.prayers, new Date());
+            this._lastApiResponse = apiResponse;
+            this._schedule = PrayerSchedule.fromApiResponse(apiResponse.prayers, new Date(), _);
             this._addExtraPrayers(apiResponse.meta);
 
             this._notificationScheduler.scheduleForPrayers(
@@ -375,7 +398,7 @@ class PrayerTimeService {
             this._schedule = null;
             this._triggerUpdate();
 
-            if (error.message !== 'Geçersiz konum') {
+            if (error.message !== ERROR_CODES.INVALID_LOCATION) {
                 this._scheduleRetry();
             }
         }
@@ -405,16 +428,18 @@ class PrayerTimeService {
             const [h, m] = meta.lastthird.split(':').map(Number);
             const time = new Date(date);
             time.setHours(h, m, 0, 0);
-            this._schedule.insertPrayer(new PrayerTime('Teheccüd', 'Tahajjud', time));
+            const offset = this._settings.get_int('tahajjud-offset-minutes');
+            time.setMinutes(time.getMinutes() + offset);
+            this._schedule.insertPrayer(new PrayerTime('tahajjud', _('Teheccüd'), 'Tahajjud', time));
         }
 
         if (this._isSahurEnabled(meta.hijriMonth)) {
-            const imsak = this._schedule.getPrayerByName('İmsak');
+            const imsak = this._schedule.getPrayerById('imsak');
             if (imsak) {
                 const minutes = this._settings.get_int('sahur-minutes-before');
                 const time = new Date(imsak.time);
                 time.setMinutes(time.getMinutes() - minutes);
-                this._schedule.insertPrayer(new PrayerTime('Sahur', 'Suhur', time));
+                this._schedule.insertPrayer(new PrayerTime('sahur', _('Sahur'), 'Suhur', time));
             }
         }
     }
@@ -570,12 +595,13 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     assertEqual(service2.location, null, 'stop() sonrası location null');
     assertEqual(service2._retryCount, 0, 'stop() sonrası retryCount sıfırlandı');
     assertEqual(service2._refreshInFlight, false, 'stop() sonrası refreshInFlight sıfırlandı');
+    assertEqual(service2._lastApiResponse, null, 'stop() sonrası lastApiResponse null');
     assertEqual(notificationScheduler2.getClearCount(), 1, 'Bildirimler temizlendi');
 
     // Test 5: start() ile API hatası - retry zamanlanmalı
     console.log('\n5. start() ile API Hatası - Retry Zamanlanır:');
     const { service: service5, apiClient: ac5, timerManager: tm5 } = createService({
-        apiClient: (() => { const c = new MockApiClient(); c.setError(true, 'Bağlantı hatası'); return c; })(),
+        apiClient: (() => { const c = new MockApiClient(); c.setError(true, 'Network error'); return c; })(),
         onUpdate: () => {}
     });
 
@@ -658,7 +684,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     // Test 11: Retry - exponential backoff
     console.log('\n11. Retry - Exponential Backoff:');
     const { service: service11, apiClient: ac11, timerManager: tm11, timerAdapter: ta11 } = createService({
-        apiClient: (() => { const c = new MockApiClient(); c.setError(true, 'Ağ hatası'); return c; })(),
+        apiClient: (() => { const c = new MockApiClient(); c.setError(true, 'Network error'); return c; })(),
     });
 
     await service11.start();
@@ -683,7 +709,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     // Test 12: Retry - başarılı kurtarma
     console.log('\n12. Retry - Başarılı Kurtarma:');
     const failingApiClient = new MockApiClient();
-    failingApiClient.setError(true, 'Ağ hatası');
+    failingApiClient.setError(true, 'Network error');
 
     const { service: service12, timerManager: tm12 } = createService({
         apiClient: failingApiClient,
@@ -717,7 +743,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     });
 
     await service14.start();
-    failingApi14.setError(true, 'Ağ hatası');
+    failingApi14.setError(true, 'Network error');
 
     await service14.refresh();
     assertEqual(service14.schedule, null, 'Hata sonrası schedule null');
@@ -789,7 +815,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     // Test 20: refresh() retryCount ve retry timer'ı sıfırlar
     console.log('\n20. refresh() - retryCount ve Retry Timer Sıfırlama:');
     const failingApi20 = new MockApiClient();
-    failingApi20.setError(true, 'Ağ hatası');
+    failingApi20.setError(true, 'Network error');
     const { service: service20, timerManager: tm20 } = createService({
         apiClient: failingApi20,
     });
@@ -808,14 +834,14 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     const settings21 = new MockSettings({ 'tahajjud-enabled': true });
     const { service: service21 } = createService({ settings: settings21 });
     await service21.start();
-    const tahajjud21 = service21.schedule.getPrayerByName('Teheccüd');
+    const tahajjud21 = service21.schedule.getPrayerById('tahajjud');
     assert(tahajjud21 !== undefined, 'Teheccüd vakti eklendi');
     assertEqual(tahajjud21.timeString, '03:30', 'Teheccüd saati doğru (Lastthird)');
 
     // Teheccüd kronolojik sırada olmalı (03:30 < 05:30 İmsak)
     const prayers21 = service21.schedule.prayers;
-    const tahajjudIdx = prayers21.findIndex(p => p.name === 'Teheccüd');
-    const imsakIdx = prayers21.findIndex(p => p.name === 'İmsak');
+    const tahajjudIdx = prayers21.findIndex(p => p.id === 'tahajjud');
+    const imsakIdx = prayers21.findIndex(p => p.id === 'imsak');
     assert(tahajjudIdx < imsakIdx, 'Teheccüd İmsak\'tan önce sıralı');
 
     // Test 22: Teheccüd eklenmemeli - toggle kapalı
@@ -823,7 +849,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     const settings22 = new MockSettings({ 'tahajjud-enabled': false });
     const { service: service22 } = createService({ settings: settings22 });
     await service22.start();
-    const tahajjud22 = service22.schedule.getPrayerByName('Teheccüd');
+    const tahajjud22 = service22.schedule.getPrayerById('tahajjud');
     assertEqual(tahajjud22, undefined, 'Toggle kapalıyken Teheccüd eklenmez');
 
     // Test 23: Sahur - Ramazan modu "on" (her zaman açık)
@@ -835,14 +861,14 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     });
     const { service: service23 } = createService({ settings: settings23 });
     await service23.start();
-    const sahur23 = service23.schedule.getPrayerByName('Sahur');
+    const sahur23 = service23.schedule.getPrayerById('sahur');
     assert(sahur23 !== undefined, 'Ramazan modu "on" ile Sahur eklendi');
     assertEqual(sahur23.timeString, '05:00', 'Sahur saati = İmsak(05:30) - 30dk = 05:00');
 
     // Sahur İmsak'tan önce olmalı
     const prayers23 = service23.schedule.prayers;
-    const sahurIdx23 = prayers23.findIndex(p => p.name === 'Sahur');
-    const imsakIdx23 = prayers23.findIndex(p => p.name === 'İmsak');
+    const sahurIdx23 = prayers23.findIndex(p => p.id === 'sahur');
+    const imsakIdx23 = prayers23.findIndex(p => p.id === 'imsak');
     assert(sahurIdx23 < imsakIdx23, 'Sahur İmsak\'tan önce sıralı');
 
     // Test 24: Sahur - Ramazan modu "auto" Hicri 9. ay (Ramazan)
@@ -850,8 +876,8 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     const ramazanApi = new MockApiClient();
     ramazanApi.setMockData({
         prayers: {
-            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
-            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+            'imsak': '05:30', 'gunes': '07:00', 'ogle': '12:30',
+            'ikindi': '15:45', 'aksam': '18:15', 'yatsi': '19:45'
         },
         meta: { lastthird: '03:30', hijriMonth: 9 }
     });
@@ -862,7 +888,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     });
     const { service: service24 } = createService({ apiClient: ramazanApi, settings: settings24 });
     await service24.start();
-    const sahur24 = service24.schedule.getPrayerByName('Sahur');
+    const sahur24 = service24.schedule.getPrayerById('sahur');
     assert(sahur24 !== undefined, 'Hicri 9. ay (Ramazan) ile auto modda Sahur eklendi');
 
     // Test 25: Sahur - Ramazan modu "auto" Hicri 8. ay (Ramazan değil)
@@ -874,7 +900,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     // Default mock data hijriMonth: 8 döner
     const { service: service25 } = createService({ settings: settings25 });
     await service25.start();
-    const sahur25 = service25.schedule.getPrayerByName('Sahur');
+    const sahur25 = service25.schedule.getPrayerById('sahur');
     assertEqual(sahur25, undefined, 'Ramazan dışında auto modda Sahur eklenmez');
 
     // Test 26: Sahur - Ramazan modu "off"
@@ -882,8 +908,8 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     const ramazanApi26 = new MockApiClient();
     ramazanApi26.setMockData({
         prayers: {
-            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
-            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+            'imsak': '05:30', 'gunes': '07:00', 'ogle': '12:30',
+            'ikindi': '15:45', 'aksam': '18:15', 'yatsi': '19:45'
         },
         meta: { lastthird: '03:30', hijriMonth: 9 }
     });
@@ -893,7 +919,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     });
     const { service: service26 } = createService({ apiClient: ramazanApi26, settings: settings26 });
     await service26.start();
-    const sahur26 = service26.schedule.getPrayerByName('Sahur');
+    const sahur26 = service26.schedule.getPrayerById('sahur');
     assertEqual(sahur26, undefined, 'Ramazan modu "off" ile Sahur eklenmez');
 
     // Test 27: Sahur toggle kapalı
@@ -904,7 +930,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     });
     const { service: service27 } = createService({ settings: settings27 });
     await service27.start();
-    const sahur27 = service27.schedule.getPrayerByName('Sahur');
+    const sahur27 = service27.schedule.getPrayerById('sahur');
     assertEqual(sahur27, undefined, 'sahur-enabled=false ile Sahur eklenmez');
 
     // Test 28: Sahur süresi değişikliği
@@ -916,7 +942,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     });
     const { service: service28 } = createService({ settings: settings28 });
     await service28.start();
-    const sahur28 = service28.schedule.getPrayerByName('Sahur');
+    const sahur28 = service28.schedule.getPrayerById('sahur');
     assert(sahur28 !== undefined, 'Sahur vakti eklendi');
     assertEqual(sahur28.timeString, '04:45', 'Sahur saati = İmsak(05:30) - 45dk = 04:45');
 
@@ -931,17 +957,17 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     const { service: service29 } = createService({ settings: settings29 });
     await service29.start();
     assertEqual(service29.schedule.prayers.length, 8, 'Toplam 8 vakit (6 + Sahur + Teheccüd)');
-    const names29 = service29.schedule.prayers.map(p => p.name);
-    assert(names29.indexOf('Teheccüd') < names29.indexOf('Sahur'), 'Teheccüd(03:30) Sahur(05:00) önünde');
-    assert(names29.indexOf('Sahur') < names29.indexOf('İmsak'), 'Sahur(05:00) İmsak(05:30) önünde');
+    const ids29 = service29.schedule.prayers.map(p => p.id);
+    assert(ids29.indexOf('tahajjud') < ids29.indexOf('sahur'), 'Teheccüd(03:30) Sahur(05:00) önünde');
+    assert(ids29.indexOf('sahur') < ids29.indexOf('imsak'), 'Sahur(05:00) İmsak(05:30) önünde');
 
     // Test 30: hijriMonth null olduğunda auto mod
     console.log('\n30. Hicri Ay Null - Auto Mod:');
     const nullHijriApi = new MockApiClient();
     nullHijriApi.setMockData({
         prayers: {
-            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
-            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+            'imsak': '05:30', 'gunes': '07:00', 'ogle': '12:30',
+            'ikindi': '15:45', 'aksam': '18:15', 'yatsi': '19:45'
         },
         meta: { lastthird: '03:30', hijriMonth: null }
     });
@@ -951,7 +977,7 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     });
     const { service: service30 } = createService({ apiClient: nullHijriApi, settings: settings30 });
     await service30.start();
-    const sahur30 = service30.schedule.getPrayerByName('Sahur');
+    const sahur30 = service30.schedule.getPrayerById('sahur');
     assertEqual(sahur30, undefined, 'hijriMonth=null ile auto modda Sahur eklenmez');
 
     // Sonuç
