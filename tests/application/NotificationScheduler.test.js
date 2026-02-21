@@ -1,3 +1,8 @@
+// NotificationScheduler birim testleri
+// GLib/GObject bağımlılığı olmadan çalışır
+
+require('../helpers/polyfills.js');
+
 const { MockTimerAdapter } = require('../mocks/MockTimerAdapter.js');
 
 class MockSettings {
@@ -20,12 +25,15 @@ class MockSettings {
 }
 
 class MockPrayer {
-    constructor(name, time) {
+    constructor(id, name, time) {
+        this._id = id;
         this._name = name;
         this._time = time instanceof Date ? time : new Date(time);
     }
 
+    get id() { return this._id; }
     get name() { return this._name; }
+    get nameEn() { return this._name; }
     get time() { return this._time; }
 
     get timeString() {
@@ -43,11 +51,15 @@ class MockPrayer {
     }
 }
 
+// gettext identity fonksiyonu
+let _ = (s) => s;
+
 class NotificationScheduler {
-    constructor({ timerAdapter, settings }) {
+    constructor({ timerAdapter, settings, gettext }) {
         this._timerAdapter = timerAdapter;
         this._settings = settings;
         this._scheduledTimers = [];
+        if (gettext) _ = gettext;
     }
 
     scheduleForPrayers(prayers, onNotify) {
@@ -81,8 +93,8 @@ class NotificationScheduler {
         const secondsUntil = Math.floor((beforeTime - now) / 1000);
         const timerId = this._timerAdapter.setTimeout(() => {
             onNotify(
-                `${minutesBefore} dakika sonra ${prayer.name}`,
-                `${prayer.name} vakti ${prayer.timeString}'de girecek`
+                _('%d dakika sonra %s').format(minutesBefore, prayer.name),
+                _('%s vakti %s\'de girecek').format(prayer.name, prayer.timeString)
             );
         }, secondsUntil);
 
@@ -95,8 +107,8 @@ class NotificationScheduler {
 
         const timerId = this._timerAdapter.setTimeout(() => {
             onNotify(
-                `${prayer.name} vakti girdi`,
-                `Şimdi ${prayer.name} vakti`
+                _('%s vakti girdi').format(prayer.name),
+                _('Şimdi %s vakti').format(prayer.name)
             );
         }, secondsUntil);
 
@@ -176,7 +188,7 @@ const scheduler2 = new NotificationScheduler({
 const now = new Date();
 const futureTime = new Date(now.getTime() + 30 * 60 * 1000);
 const prayers = [
-    new MockPrayer('Öğle', futureTime)
+    new MockPrayer('ogle', 'Öğle', futureTime)
 ];
 
 let notifications = [];
@@ -210,7 +222,7 @@ const scheduler4 = new NotificationScheduler({
 
 const pastTime = new Date(now.getTime() - 60 * 60 * 1000);
 const pastPrayers = [
-    new MockPrayer('İmsak', pastTime)
+    new MockPrayer('imsak', 'İmsak', pastTime)
 ];
 
 scheduler4.scheduleForPrayers(pastPrayers, () => {});
@@ -274,6 +286,50 @@ const scheduler8 = new NotificationScheduler({
 
 scheduler8.scheduleForPrayers(prayers, () => {});
 assertEqual(mockAdapter8.getActiveTimerCount(), 1, 'Sadece before bildirim için bir timer');
+
+console.log('\n9. Format String Bildirim İçeriği Testi:');
+const mockAdapter9 = new MockTimerAdapter();
+const mockSettings9 = new MockSettings({
+    'notifications-enabled': true,
+    'notify-before-minutes': 10,
+    'notify-on-time': true,
+});
+const scheduler9 = new NotificationScheduler({
+    timerAdapter: mockAdapter9,
+    settings: mockSettings9
+});
+
+const farFuture = new Date(now.getTime() + 60 * 60 * 1000);
+const formatPrayers = [
+    new MockPrayer('ogle', 'Öğle', farFuture)
+];
+
+let formatNotifications = [];
+scheduler9.scheduleForPrayers(formatPrayers, (title, body) => {
+    formatNotifications.push({ title, body });
+});
+
+// Timer'ları tetikle (büyük zaman ilerlemesi ile)
+mockAdapter9.advanceTime(999999);
+
+assertEqual(formatNotifications.length, 2, 'İki bildirim tetiklendi');
+// before bildirim
+assert(formatNotifications[0].title.includes('10'), 'Before bildirimi dakika içerir');
+assert(formatNotifications[0].title.includes('Öğle'), 'Before bildirimi vakit adı içerir');
+// on-time bildirim
+assert(formatNotifications[1].title.includes('Öğle'), 'On-time bildirimi vakit adı içerir');
+
+console.log('\n10. Gettext Parametresi Testi:');
+const mockAdapter10 = new MockTimerAdapter();
+const mockSettings10 = new MockSettings();
+const mockGettext = (s) => s.replace('Öğle', 'Dhuhr');
+const scheduler10 = new NotificationScheduler({
+    timerAdapter: mockAdapter10,
+    settings: mockSettings10,
+    gettext: mockGettext
+});
+
+assert(scheduler10._timerAdapter === mockAdapter10, 'Gettext ile scheduler oluşturuldu');
 
 console.log('\n=== Sonuç ===');
 console.log(`Toplam: ${passedTests + failedTests} test`);

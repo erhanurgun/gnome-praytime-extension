@@ -5,17 +5,21 @@ import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import { getPrayerNamesList, APP_VERSION, APP_DEVELOPER, APP_WEBSITE } from '../config/constants.js';
+import { PRAYER_NAMES, APP_VERSION, APP_DEVELOPER, APP_WEBSITE } from '../config/constants.js';
 import { StyleHelper } from './helpers/StyleHelper.js';
+
+let _ = (s) => s;
 
 export const PanelButton = GObject.registerClass(
 class PanelButton extends PanelMenu.Button {
-    _init(extension) {
+    _init(extension, gettext) {
         super._init(0.5, 'praytime-indicator');
 
         this._extension = extension;
         this._prayerItems = [];
         this._settingsHandlerId = null;
+
+        if (gettext) _ = gettext;
 
         this._buildPanel();
         this._buildMenu();
@@ -26,7 +30,6 @@ class PanelButton extends PanelMenu.Button {
             style_class: 'panel-status-menu-box praytime-panel-box',
         });
 
-        // İkon oluştur
         const iconPath = `${this._extension.path}/icons/mosque-symbolic.svg`;
         const gicon = Gio.icon_new_for_string(iconPath);
         this._icon = new St.Icon({
@@ -36,7 +39,7 @@ class PanelButton extends PanelMenu.Button {
         });
 
         this._label = new St.Label({
-            text: 'Yükleniyor...',
+            text: _('Yükleniyor...'),
             y_align: Clutter.ActorAlign.CENTER,
             style_class: 'praytime-label',
         });
@@ -47,13 +50,13 @@ class PanelButton extends PanelMenu.Button {
     }
 
     _buildMenu() {
-        this._headerItem = new PopupMenu.PopupMenuItem('Namaz Vakitleri', {
+        this._headerItem = new PopupMenu.PopupMenuItem(_('Namaz Vakitleri'), {
             reactive: false,
             style_class: 'praytime-header',
         });
         this.menu.addMenuItem(this._headerItem);
 
-        this._locationItem = new PopupMenu.PopupMenuItem('Konum: --', {
+        this._locationItem = new PopupMenu.PopupMenuItem(`${_('Konum')}: --`, {
             reactive: false,
             style_class: 'praytime-location',
         });
@@ -64,25 +67,25 @@ class PanelButton extends PanelMenu.Button {
         this._prayerSection = new PopupMenu.PopupMenuSection();
         this.menu.addMenuItem(this._prayerSection);
 
-        const prayerNames = getPrayerNamesList();
-        for (const name of prayerNames) {
-            const item = new PopupMenu.PopupMenuItem(`--:-- - ${name}`, {
+        for (const p of PRAYER_NAMES) {
+            const displayName = _(p.name);
+            const item = new PopupMenu.PopupMenuItem(`--:-- - ${displayName}`, {
                 reactive: false,
             });
-            this._prayerItems.push({ name, item });
+            this._prayerItems.push({ id: p.id, name: displayName, item });
             this._prayerSection.addMenuItem(item);
         }
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        const refreshItem = new PopupMenu.PopupMenuItem('Yenile');
+        const refreshItem = new PopupMenu.PopupMenuItem(_('Yenile'));
         this._refreshItem = refreshItem;
         this._refreshHandlerId = refreshItem.connect('activate', () => {
             this._extension.refreshService();
         });
         this.menu.addMenuItem(refreshItem);
 
-        const settingsItem = new PopupMenu.PopupMenuItem('Ayarlar');
+        const settingsItem = new PopupMenu.PopupMenuItem(_('Ayarlar'));
         this._settingsItem = settingsItem;
         this._settingsHandlerId = settingsItem.connect('activate', () => {
             this._extension.openPreferences();
@@ -103,7 +106,7 @@ class PanelButton extends PanelMenu.Button {
 
     update(service) {
         if (!service) {
-            this._label.set_text('Hata');
+            this._label.set_text(_('Hata'));
             return;
         }
 
@@ -112,8 +115,8 @@ class PanelButton extends PanelMenu.Button {
         const location = service.location;
 
         if (!schedule) {
-            this._label.set_text('Bağlantı hatası');
-            this._locationItem.label.set_text('Konum: Yüklenemedi');
+            this._label.set_text(_('Bağlantı hatası'));
+            this._locationItem.label.set_text(`${_('Konum')}: ${_('Yüklenemedi')}`);
             return;
         }
 
@@ -141,16 +144,13 @@ class PanelButton extends PanelMenu.Button {
 
         const { showIcon, showName, showTime, showCountdown, thresholdMinutes } = options;
 
-        // İkon görünürlüğü
         if (showIcon) {
             this._icon.show();
         } else {
             this._icon.hide();
         }
 
-        // Metin görünürlüğü - en az biri açıksa label göster
         if (!showName && !showTime && !showCountdown) {
-            // Hiçbiri açık değilse ve ikon da kapalıysa en azından saati göster
             if (!showIcon) {
                 this._label.set_text(nextPrayer.timeString);
                 this._label.show();
@@ -162,14 +162,12 @@ class PanelButton extends PanelMenu.Button {
 
         this._label.show();
 
-        // Metin oluştur
         const parts = [];
         if (showName) parts.push(nextPrayer.name);
         if (showTime) parts.push(nextPrayer.timeString);
 
         let labelText = parts.join(' ') || '';
 
-        // Geri sayım ekle
         if (showCountdown) {
             const remainingSeconds = nextPrayer.getSecondsUntil();
             const remainingMinutes = Math.floor(remainingSeconds / 60);
@@ -185,31 +183,31 @@ class PanelButton extends PanelMenu.Button {
 
     _updateLocation(location) {
         if (location) {
-            this._locationItem.label.set_text(`Konum: ${location.cityName || location.toString()}`);
+            this._locationItem.label.set_text(`${_('Konum')}: ${location.cityName || location.toString()}`);
         }
     }
 
+    // id bazlı prayer tracking
     _updatePrayerList(schedule, nextPrayer) {
-        const scheduleNames = schedule.prayers.map(p => p.name);
-        const currentNames = this._prayerItems.map(pi => pi.name);
+        const scheduleIds = schedule.prayers.map(p => p.id);
+        const currentIds = this._prayerItems.map(pi => pi.id);
 
-        // Vakit listesi değiştiyse rebuild (Sahur/Teheccüd eklenmiş veya kaldırılmış olabilir)
-        if (scheduleNames.length !== currentNames.length ||
-            !scheduleNames.every((n, i) => n === currentNames[i])) {
+        if (scheduleIds.length !== currentIds.length ||
+            !scheduleIds.every((id, i) => id === currentIds[i])) {
             this._rebuildPrayerItems(schedule);
         }
 
         const currentPrayer = schedule.getCurrentPrayer();
 
-        for (const { name, item } of this._prayerItems) {
-            const prayer = schedule.getPrayerByName(name);
+        for (const { id, item } of this._prayerItems) {
+            const prayer = schedule.getPrayerById(id);
 
             if (prayer) {
-                item.label.set_text(`${prayer.timeString} - ${name}`);
+                item.label.set_text(`${prayer.timeString} - ${prayer.name}`);
 
                 StyleHelper.updateStyles(item, {
-                    'praytime-active': currentPrayer?.name === name,
-                    'praytime-next': nextPrayer?.name === name
+                    'praytime-active': currentPrayer?.id === id,
+                    'praytime-next': nextPrayer?.id === id
                 });
             }
         }
@@ -222,7 +220,7 @@ class PanelButton extends PanelMenu.Button {
             const item = new PopupMenu.PopupMenuItem(`${prayer.timeString} - ${prayer.name}`, {
                 reactive: false,
             });
-            this._prayerItems.push({ name: prayer.name, item });
+            this._prayerItems.push({ id: prayer.id, name: prayer.name, item });
             this._prayerSection.addMenuItem(item);
         }
     }

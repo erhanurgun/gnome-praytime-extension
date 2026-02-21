@@ -38,6 +38,18 @@ echo -e "${BLUE}[*] Schema derleniyor...${NC}"
 glib-compile-schemas schemas/
 echo -e "${GREEN}[OK] Schema derlendi${NC}"
 
+# Çeviri dosyalarını derle
+echo -e "${BLUE}[*] Çeviri dosyaları derleniyor...${NC}"
+for po_file in po/*.po; do
+    if [ -f "$po_file" ]; then
+        lang=$(basename "$po_file" .po)
+        mkdir -p "locale/$lang/LC_MESSAGES"
+        msgfmt "$po_file" -o "locale/$lang/LC_MESSAGES/${EXTENSION_UUID}.mo"
+        echo -e "  ${GREEN}[OK]${NC} $lang"
+    fi
+done
+echo -e "${GREEN}[OK] Çeviri dosyaları derlendi${NC}"
+
 # Zip paketi oluştur
 echo -e "${BLUE}[*] Zip paketi oluşturuluyor...${NC}"
 
@@ -50,6 +62,7 @@ zip -r "$OUTPUT_FILE" \
     src/ \
     icons/ \
     sounds/ \
+    locale/ \
     --exclude "*.pyc" \
     --exclude "__pycache__/*" \
     --exclude ".git/*" \

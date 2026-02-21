@@ -1,9 +1,14 @@
 // Tek bir namaz vaktini temsil eden model
 export class PrayerTime {
-    constructor(name, nameEn, time) {
+    constructor(id, name, nameEn, time) {
+        this._id = id;
         this._name = name;
         this._nameEn = nameEn;
         this._time = time instanceof Date ? time : new Date(time);
+    }
+
+    get id() {
+        return this._id;
     }
 
     get name() {

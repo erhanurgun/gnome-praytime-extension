@@ -1,28 +1,24 @@
 // PrayerTimesApiClient mock sınıfı
-// PrayerTimeService testleri için kullanılır
 
 class MockApiClient {
     constructor() {
         this._mockData = null;
         this._shouldFail = false;
-        this._errorMessage = 'Mock API hatası';
+        this._errorMessage = 'Mock API error';
         this._fetchCount = 0;
         this._lastLocation = null;
         this._destroyed = false;
     }
 
-    // Mock veri ayarlama
     setMockData(data) {
         this._mockData = data;
     }
 
-    // Hata simülasyonu
-    setError(shouldFail, message = 'Mock API hatası') {
+    setError(shouldFail, message = 'Mock API error') {
         this._shouldFail = shouldFail;
         this._errorMessage = message;
     }
 
-    // API çağrısını simüle et
     async fetchPrayerTimes(location) {
         this._fetchCount++;
         this._lastLocation = location;
@@ -39,15 +35,15 @@ class MockApiClient {
     }
 
     _getDefaultMockData() {
-        // API client'ın _transformResponse sonucu: { prayers, meta } formatı
+        // id bazlı eşleme - _transformResponse çıktı formatı
         return {
             prayers: {
-                'İmsak': '05:30',
-                'Güneş': '07:00',
-                'Öğle': '12:30',
-                'İkindi': '15:45',
-                'Akşam': '18:15',
-                'Yatsı': '19:45'
+                'imsak': '05:30',
+                'gunes': '07:00',
+                'ogle': '12:30',
+                'ikindi': '15:45',
+                'aksam': '18:15',
+                'yatsi': '19:45'
             },
             meta: {
                 lastthird: '03:30',
@@ -56,7 +52,6 @@ class MockApiClient {
         };
     }
 
-    // Test için yardımcı metodlar
     getFetchCount() {
         return this._fetchCount;
     }
@@ -68,7 +63,7 @@ class MockApiClient {
     reset() {
         this._mockData = null;
         this._shouldFail = false;
-        this._errorMessage = 'Mock API hatası';
+        this._errorMessage = 'Mock API error';
         this._fetchCount = 0;
         this._lastLocation = null;
     }
