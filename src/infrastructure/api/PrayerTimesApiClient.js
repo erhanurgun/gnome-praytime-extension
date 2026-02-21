@@ -3,9 +3,10 @@ import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import { API_BASE_URL, PRAYER_NAMES, APP_USER_AGENT } from '../../config/constants.js';
 
-// Aladhan namaz vakitleri API istemcisi (Diyanet hesaplama metodu)
+// Aladhan namaz vakitleri API istemcisi
 export class PrayerTimesApiClient {
-    constructor() {
+    constructor(settings) {
+        this._settings = settings;
         this._session = new Soup.Session({
             user_agent: APP_USER_AGENT,
             timeout: 30,
@@ -15,15 +16,27 @@ export class PrayerTimesApiClient {
 
     async fetchPrayerTimes(location) {
         const dateStr = this._formatDate(new Date());
-        const city = encodeURIComponent(location.cityName);
-        const url = `${API_BASE_URL}/v1/timingsByCity/${dateStr}?city=${city}&country=Turkey&method=13`;
+        const method = this._settings?.get_int('calculation-method') ?? 13;
+        const url = this._buildUrl(location, dateStr, method);
         const data = await this._fetchJson(url);
 
         if (!this._isValidResponse(data)) {
-            throw new Error('API yanıtı geçersiz format');
+            throw new Error('Invalid API response format');
         }
 
         return this._transformResponse(data);
+    }
+
+    _buildUrl(location, dateStr, method) {
+        if (location.isCoordinateMode) {
+            const lat = encodeURIComponent(location.latitude);
+            const lng = encodeURIComponent(location.longitude);
+            return `${API_BASE_URL}/v1/timings/${dateStr}?latitude=${lat}&longitude=${lng}&method=${method}`;
+        }
+
+        const city = encodeURIComponent(location.cityName);
+        const country = encodeURIComponent(location.countryName);
+        return `${API_BASE_URL}/v1/timingsByCity/${dateStr}?city=${city}&country=${country}&method=${method}`;
     }
 
     _isValidResponse(data) {
@@ -63,6 +76,7 @@ export class PrayerTimesApiClient {
         });
     }
 
+    // id bazlı eşleme - çeviriden bağımsız
     _transformResponse(data) {
         const timings = data.data.timings;
         const timeRegex = /^\d{2}:\d{2}$/;
@@ -71,9 +85,9 @@ export class PrayerTimesApiClient {
         for (const prayer of PRAYER_NAMES) {
             const value = timings[prayer.apiKey];
             if (!value || !timeRegex.test(value)) {
-                throw new Error(`API yanıtı geçersiz: ${prayer.name} değeri hatalı (${value})`);
+                throw new Error(`Invalid API response: ${prayer.apiKey} value is invalid (${value})`);
             }
-            prayers[prayer.name] = value;
+            prayers[prayer.id] = value;
         }
 
         // Ek vakit meta verisi (Teheccüd ve Ramazan tespiti için)
@@ -100,5 +114,6 @@ export class PrayerTimesApiClient {
             this._cancellable = null;
         }
         this._session = null;
+        this._settings = null;
     }
 }
