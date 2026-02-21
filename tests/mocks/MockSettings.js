@@ -1,5 +1,4 @@
 // GSettings mock sınıfı
-// LocationProvider testleri için kullanılır
 
 class MockSettings {
     constructor(initialValues = {}) {
@@ -7,17 +6,28 @@ class MockSettings {
             'location-id': 0,
             'city-name': '',
             'region-name': '',
+            'location-mode': 'city',
+            'country-name': 'Turkey',
+            'latitude': 39.9334,
+            'longitude': 32.8597,
+            'calculation-method': 13,
+            'language': 'tr',
             'ramadan-mode': 'auto',
-            'sahur-enabled': true,
+            'sahur-enabled': false,
             'sahur-minutes-before': 30,
             'tahajjud-enabled': false,
+            'tahajjud-offset-minutes': 0,
+            'notifications-enabled': true,
+            'notify-before-minutes': 5,
+            'notify-on-time': true,
+            'notification-sound': true,
             ...initialValues
         };
     }
 
     get_int(key) {
         const value = this._values[key];
-        return typeof value === 'number' ? value : 0;
+        return typeof value === 'number' ? Math.floor(value) : 0;
     }
 
     get_string(key) {
@@ -30,6 +40,11 @@ class MockSettings {
         return typeof value === 'boolean' ? value : false;
     }
 
+    get_double(key) {
+        const value = this._values[key];
+        return typeof value === 'number' ? value : 0.0;
+    }
+
     set_int(key, value) {
         this._values[key] = value;
     }
@@ -39,6 +54,10 @@ class MockSettings {
     }
 
     set_boolean(key, value) {
+        this._values[key] = value;
+    }
+
+    set_double(key, value) {
         this._values[key] = value;
     }
 
@@ -55,7 +74,13 @@ class MockSettings {
         this._values = {
             'location-id': 0,
             'city-name': '',
-            'region-name': ''
+            'region-name': '',
+            'location-mode': 'city',
+            'country-name': 'Turkey',
+            'latitude': 39.9334,
+            'longitude': 32.8597,
+            'calculation-method': 13,
+            'language': 'tr',
         };
     }
 }
