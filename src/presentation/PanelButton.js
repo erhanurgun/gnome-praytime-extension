@@ -49,17 +49,58 @@ class PanelButton extends PanelMenu.Button {
         this.add_child(box);
     }
 
-    _buildMenu() {
-        this._headerItem = new PopupMenu.PopupMenuItem(_('Namaz Vakitleri'), {
+    _getMenuIcon(name) {
+        return Gio.icon_new_for_string(
+            `${this._extension.path}/icons/${name}-symbolic.svg`
+        );
+    }
+
+    _getPrayerIcon(id) {
+        const iconMap = {
+            tahajjud: 'tahajjud', sahur: 'sahur',
+            imsak: 'imsak', gunes: 'sunrise',
+            ogle: 'noon', ikindi: 'afternoon',
+            aksam: 'sunset', yatsi: 'night',
+        };
+        return this._getMenuIcon(iconMap[id] || 'mosque');
+    }
+
+    _createPrayerItem(name, icon, time) {
+        const item = new PopupMenu.PopupImageMenuItem(name, icon, {
             reactive: false,
-            style_class: 'praytime-header',
+        });
+
+        const timeLabel = new St.Label({
+            text: time,
+            style_class: 'praytime-time-label',
+            x_expand: true,
+            x_align: Clutter.ActorAlign.END,
+        });
+        item.add_child(timeLabel);
+
+        return { item, timeLabel };
+    }
+
+    _buildMenu() {
+        this._headerItem = new PopupMenu.PopupMenuItem(
+            _('Namaz Vakitleri').toLocaleUpperCase('tr'), {
+                reactive: false,
+                style_class: 'praytime-header',
+            }
+        );
+        this._headerItem.label.set({
+            x_expand: true,
+            x_align: Clutter.ActorAlign.CENTER,
         });
         this.menu.addMenuItem(this._headerItem);
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        this._locationItem = new PopupMenu.PopupMenuItem(`${_('Konum')}: --`, {
-            reactive: false,
-            style_class: 'praytime-location',
-        });
+        this._locationItem = new PopupMenu.PopupImageMenuItem(
+            `${_('Konum')}: --`, this._getMenuIcon('location'), {
+                reactive: false,
+                style_class: 'praytime-location',
+            }
+        );
         this.menu.addMenuItem(this._locationItem);
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -69,33 +110,94 @@ class PanelButton extends PanelMenu.Button {
 
         for (const p of PRAYER_NAMES) {
             const displayName = _(p.name);
-            const item = new PopupMenu.PopupMenuItem(`--:-- - ${displayName}`, {
-                reactive: false,
-            });
-            this._prayerItems.push({ id: p.id, name: displayName, item });
+            const { item, timeLabel } = this._createPrayerItem(
+                displayName, this._getPrayerIcon(p.id), '--:--'
+            );
+            this._prayerItems.push({ id: p.id, name: displayName, item, timeLabel });
             this._prayerSection.addMenuItem(item);
         }
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        const refreshItem = new PopupMenu.PopupMenuItem(_('Yenile'));
-        this._refreshItem = refreshItem;
-        this._refreshHandlerId = refreshItem.connect('activate', () => {
-            this._extension.refreshService();
+        const actionRow = new PopupMenu.PopupBaseMenuItem({
+            activate: false,
+            can_focus: false,
+            style_class: 'praytime-action-row',
         });
-        this.menu.addMenuItem(refreshItem);
 
-        const settingsItem = new PopupMenu.PopupMenuItem(_('Ayarlar'));
-        this._settingsItem = settingsItem;
-        this._settingsHandlerId = settingsItem.connect('activate', () => {
-            this._extension.openPreferences();
+        const refreshBox = new St.BoxLayout({ x_align: Clutter.ActorAlign.CENTER, style: 'spacing: 4px;' });
+        refreshBox.add_child(new St.Icon({
+            gicon: this._getMenuIcon('refresh'),
+            icon_size: 16,
+            style_class: 'popup-menu-icon',
+        }));
+        refreshBox.add_child(new St.Label({ text: _('Yenile'), y_align: Clutter.ActorAlign.CENTER }));
+
+        const refreshBtn = new St.Button({
+            x_expand: true,
+            style_class: 'praytime-action-button',
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            child: refreshBox,
         });
-        this.menu.addMenuItem(settingsItem);
+        this._refreshHandlerId = refreshBtn.connect('clicked', () => {
+            this._extension.refreshService();
+            this.menu.close();
+        });
+
+        const settingsBox = new St.BoxLayout({ x_align: Clutter.ActorAlign.CENTER, style: 'spacing: 4px;' });
+        settingsBox.add_child(new St.Icon({
+            gicon: this._getMenuIcon('settings'),
+            icon_size: 16,
+            style_class: 'popup-menu-icon',
+        }));
+        settingsBox.add_child(new St.Label({ text: _('Ayarlar'), y_align: Clutter.ActorAlign.CENTER }));
+
+        const settingsBtn = new St.Button({
+            x_expand: true,
+            style_class: 'praytime-action-button',
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            child: settingsBox,
+        });
+        this._settingsHandlerId = settingsBtn.connect('clicked', () => {
+            this._extension.openPreferences();
+            this.menu.close();
+        });
+
+        const divider = new St.Widget({
+            style_class: 'praytime-action-divider',
+            y_expand: true,
+        });
+
+        // Buton hover'ı actionRow'a iletilmeli ki menü sistemi
+        // diğer öğelerin (sürüm satırı vb.) hover'ını temizleyebilsin
+        refreshBtn.connect('notify::hover', () => {
+            if (refreshBtn.hover)
+                actionRow.setActive(true);
+        });
+        settingsBtn.connect('notify::hover', () => {
+            if (settingsBtn.hover)
+                actionRow.setActive(true);
+        });
+
+        actionRow.add_child(refreshBtn);
+        actionRow.add_child(divider);
+        actionRow.add_child(settingsBtn);
+        this._refreshBtn = refreshBtn;
+        this._settingsBtn = settingsBtn;
+        this.menu.addMenuItem(actionRow);
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         const versionItem = new PopupMenu.PopupMenuItem(`v${APP_VERSION} | ${APP_DEVELOPER}`, {
             style_class: 'praytime-version',
+        });
+        versionItem.label.set({
+            x_expand: true,
+            x_align: Clutter.ActorAlign.CENTER,
         });
         this._versionItem = versionItem;
         this._versionHandlerId = versionItem.connect('activate', () => {
@@ -199,11 +301,12 @@ class PanelButton extends PanelMenu.Button {
 
         const currentPrayer = schedule.getCurrentPrayer();
 
-        for (const { id, item } of this._prayerItems) {
+        for (const { id, item, timeLabel } of this._prayerItems) {
             const prayer = schedule.getPrayerById(id);
 
             if (prayer) {
-                item.label.set_text(`${prayer.timeString} - ${prayer.name}`);
+                item.label.set_text(prayer.name);
+                timeLabel.set_text(prayer.timeString);
 
                 StyleHelper.updateStyles(item, {
                     'praytime-active': currentPrayer?.id === id,
@@ -217,10 +320,10 @@ class PanelButton extends PanelMenu.Button {
         this._prayerSection.removeAll();
         this._prayerItems = [];
         for (const prayer of schedule.prayers) {
-            const item = new PopupMenu.PopupMenuItem(`${prayer.timeString} - ${prayer.name}`, {
-                reactive: false,
-            });
-            this._prayerItems.push({ id: prayer.id, name: prayer.name, item });
+            const { item, timeLabel } = this._createPrayerItem(
+                prayer.name, this._getPrayerIcon(prayer.id), prayer.timeString
+            );
+            this._prayerItems.push({ id: prayer.id, name: prayer.name, item, timeLabel });
             this._prayerSection.addMenuItem(item);
         }
     }
@@ -239,13 +342,13 @@ class PanelButton extends PanelMenu.Button {
     }
 
     destroy() {
-        if (this._refreshItem && this._refreshHandlerId) {
-            this._refreshItem.disconnect(this._refreshHandlerId);
+        if (this._refreshBtn && this._refreshHandlerId) {
+            this._refreshBtn.disconnect(this._refreshHandlerId);
             this._refreshHandlerId = null;
         }
 
-        if (this._settingsItem && this._settingsHandlerId) {
-            this._settingsItem.disconnect(this._settingsHandlerId);
+        if (this._settingsBtn && this._settingsHandlerId) {
+            this._settingsBtn.disconnect(this._settingsHandlerId);
             this._settingsHandlerId = null;
         }
 

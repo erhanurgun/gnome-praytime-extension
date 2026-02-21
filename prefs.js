@@ -25,6 +25,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
         this._settings = this.getSettings();
         this._signalHandlers = [];
         this._window = window;
+        this._window.set_size_request(660, 770);
         this._pages = [];
 
         _ = createGettextWrapper(this._settings);
