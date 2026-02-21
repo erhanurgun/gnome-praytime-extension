@@ -96,7 +96,7 @@ class NotificationScheduler {
         const timerId = this._timerAdapter.setTimeout(() => {
             onNotify(
                 `${prayer.name} vakti girdi`,
-                `Simdi ${prayer.name} vakti`
+                `Şimdi ${prayer.name} vakti`
             );
         }, secondsUntil);
 
@@ -125,7 +125,7 @@ let failedTests = 0;
 
 function assert(condition, message) {
     if (condition) {
-        console.log(`  [BASARILI] ${message}`);
+        console.log(`  [BAŞARILI] ${message}`);
         passedTests++;
     } else {
         console.log(`  [HATALI] ${message}`);
@@ -136,12 +136,12 @@ function assert(condition, message) {
 function assertEqual(actual, expected, message) {
     const passed = actual === expected;
     if (passed) {
-        console.log(`  [BASARILI] ${message}`);
+        console.log(`  [BAŞARILI] ${message}`);
         passedTests++;
     } else {
         console.log(`  [HATALI] ${message}`);
         console.log(`    Beklenen: ${expected}`);
-        console.log(`    Gercek: ${actual}`);
+        console.log(`    Gerçek: ${actual}`);
         failedTests++;
     }
 }
@@ -156,10 +156,10 @@ const scheduler1 = new NotificationScheduler({
     settings: mockSettings1
 });
 
-assert(scheduler1._timerAdapter === mockAdapter1, 'timerAdapter dogru atanir');
-assert(scheduler1._settings === mockSettings1, 'settings dogru atanir');
-assert(Array.isArray(scheduler1._scheduledTimers), 'scheduledTimers array olarak baslar');
-assertEqual(scheduler1._scheduledTimers.length, 0, 'scheduledTimers bos baslar');
+assert(scheduler1._timerAdapter === mockAdapter1, 'timerAdapter doğru atanır');
+assert(scheduler1._settings === mockSettings1, 'settings doğru atanır');
+assert(Array.isArray(scheduler1._scheduledTimers), 'scheduledTimers array olarak başlar');
+assertEqual(scheduler1._scheduledTimers.length, 0, 'scheduledTimers boş başlar');
 
 console.log('\n2. scheduleForPrayers Testleri:');
 const mockAdapter2 = new MockTimerAdapter();
@@ -176,7 +176,7 @@ const scheduler2 = new NotificationScheduler({
 const now = new Date();
 const futureTime = new Date(now.getTime() + 30 * 60 * 1000);
 const prayers = [
-    new MockPrayer('Ogle', futureTime)
+    new MockPrayer('Öğle', futureTime)
 ];
 
 let notifications = [];
@@ -184,10 +184,10 @@ scheduler2.scheduleForPrayers(prayers, (title, body) => {
     notifications.push({ title, body });
 });
 
-assertEqual(mockAdapter2.getActiveTimerCount(), 2, 'Iki timer olusturulur (oncesi ve vakti)');
-assertEqual(scheduler2._scheduledTimers.length, 2, 'scheduledTimers iki kayit icerir');
+assertEqual(mockAdapter2.getActiveTimerCount(), 2, 'İki timer oluşturulur (öncesi ve vakti)');
+assertEqual(scheduler2._scheduledTimers.length, 2, 'scheduledTimers iki kayıt içerir');
 
-console.log('\n3. Bildirimler Devre Disi Testi:');
+console.log('\n3. Bildirimler Devre Dışı Testi:');
 const mockAdapter3 = new MockTimerAdapter();
 const mockSettings3 = new MockSettings({
     'notifications-enabled': false
@@ -198,9 +198,9 @@ const scheduler3 = new NotificationScheduler({
 });
 
 scheduler3.scheduleForPrayers(prayers, () => {});
-assertEqual(mockAdapter3.getActiveTimerCount(), 0, 'Bildirimler kapaliyken timer olusturulmaz');
+assertEqual(mockAdapter3.getActiveTimerCount(), 0, 'Bildirimler kapalıyken timer oluşturulmaz');
 
-console.log('\n4. Gecmis Vakit Testi:');
+console.log('\n4. Geçmiş Vakit Testi:');
 const mockAdapter4 = new MockTimerAdapter();
 const mockSettings4 = new MockSettings();
 const scheduler4 = new NotificationScheduler({
@@ -210,11 +210,11 @@ const scheduler4 = new NotificationScheduler({
 
 const pastTime = new Date(now.getTime() - 60 * 60 * 1000);
 const pastPrayers = [
-    new MockPrayer('Imsak', pastTime)
+    new MockPrayer('İmsak', pastTime)
 ];
 
 scheduler4.scheduleForPrayers(pastPrayers, () => {});
-assertEqual(mockAdapter4.getActiveTimerCount(), 0, 'Gecmis vakit icin timer olusturulmaz');
+assertEqual(mockAdapter4.getActiveTimerCount(), 0, 'Geçmiş vakit için timer oluşturulmaz');
 
 console.log('\n5. clearAll Testi:');
 const mockAdapter5 = new MockTimerAdapter();
@@ -225,10 +225,10 @@ const scheduler5 = new NotificationScheduler({
 });
 
 scheduler5.scheduleForPrayers(prayers, () => {});
-assert(mockAdapter5.getActiveTimerCount() > 0, 'Timer olusturuldu');
+assert(mockAdapter5.getActiveTimerCount() > 0, 'Timer oluşturuldu');
 
 scheduler5.clearAll();
-assertEqual(mockAdapter5.getActiveTimerCount(), 0, 'clearAll tum timerları temizler');
+assertEqual(mockAdapter5.getActiveTimerCount(), 0, 'clearAll tüm timerları temizler');
 assertEqual(scheduler5._scheduledTimers.length, 0, 'scheduledTimers temizlenir');
 
 console.log('\n6. destroy Testi:');
@@ -258,7 +258,7 @@ const scheduler7 = new NotificationScheduler({
 });
 
 scheduler7.scheduleForPrayers(prayers, () => {});
-assertEqual(mockAdapter7.getActiveTimerCount(), 1, 'Sadece on-time bildirim icin bir timer');
+assertEqual(mockAdapter7.getActiveTimerCount(), 1, 'Sadece on-time bildirim için bir timer');
 
 console.log('\n8. Sadece Before Bildirim Testi:');
 const mockAdapter8 = new MockTimerAdapter();
@@ -273,12 +273,12 @@ const scheduler8 = new NotificationScheduler({
 });
 
 scheduler8.scheduleForPrayers(prayers, () => {});
-assertEqual(mockAdapter8.getActiveTimerCount(), 1, 'Sadece before bildirim icin bir timer');
+assertEqual(mockAdapter8.getActiveTimerCount(), 1, 'Sadece before bildirim için bir timer');
 
-console.log('\n=== Sonuc ===');
+console.log('\n=== Sonuç ===');
 console.log(`Toplam: ${passedTests + failedTests} test`);
-console.log(`Basarili: ${passedTests}`);
-console.log(`Basarisiz: ${failedTests}`);
+console.log(`Başarılı: ${passedTests}`);
+console.log(`Başarısız: ${failedTests}`);
 
 if (failedTests > 0) {
     process.exit(1);

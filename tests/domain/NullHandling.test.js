@@ -17,12 +17,12 @@ class PrayerSchedule {
         }
 
         const PRAYER_NAMES = [
-            { name: 'İmsak', nameEn: 'Imsak', apiKey: 'fajr' },
-            { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'sun' },
-            { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'dhuhr' },
-            { name: 'İkindi', nameEn: 'Asr', apiKey: 'asr' },
-            { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'maghrib' },
-            { name: 'Yatsı', nameEn: 'Isha', apiKey: 'isha' },
+            { name: 'İmsak', nameEn: 'Imsak', apiKey: 'Imsak' },
+            { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'Sunrise' },
+            { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'Dhuhr' },
+            { name: 'İkindi', nameEn: 'Asr', apiKey: 'Asr' },
+            { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'Maghrib' },
+            { name: 'Yatsı', nameEn: 'Isha', apiKey: 'Isha' },
         ];
 
         const prayers = PRAYER_NAMES.map(p => {

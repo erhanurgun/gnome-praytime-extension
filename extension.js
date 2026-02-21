@@ -87,6 +87,12 @@ export default class PraytimeExtension extends Extension {
             'notifications-enabled': () => this._rescheduleNotifications(),
             'notify-before-minutes': () => this._rescheduleNotifications(),
             'notify-on-time': () => this._rescheduleNotifications(),
+            // Ek vakit ayarları
+            'sahur-enabled': () => this._refreshSchedule(),
+            'sahur-minutes-before': () => this._refreshSchedule(),
+            'ramadan-mode': () => this._refreshSchedule(),
+            'tahajjud-enabled': () => this._refreshSchedule(),
+            'tahajjud-offset-minutes': () => this._refreshSchedule(),
         };
 
         handlers[key]?.();
@@ -94,6 +100,10 @@ export default class PraytimeExtension extends Extension {
 
     _rescheduleNotifications() {
         this._service?.rescheduleNotifications();
+    }
+
+    _refreshSchedule() {
+        this._service?.recalculateSchedule();
     }
 
     async _restartService() {
@@ -129,6 +139,15 @@ export default class PraytimeExtension extends Extension {
         panelBox.insert_child_at_index(container, -1);
 
         console.log(`[Praytime] Panel konumu değiştirildi: ${newPosition}`);
+    }
+
+    async refreshService() {
+        if (!this._service || !this._isEnabled) return;
+        try {
+            await this._service.refresh();
+        } catch (error) {
+            console.error(`[Praytime] Manuel yenileme hatası: ${error.message}`);
+        }
     }
 
     _onUpdate() {

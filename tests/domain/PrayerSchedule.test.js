@@ -30,12 +30,12 @@ class PrayerTime {
 
 // PRAYER_NAMES sabiti (test için)
 const PRAYER_NAMES = [
-    { name: 'İmsak', nameEn: 'Fajr', apiKey: 'fajr' },
-    { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'sun' },
-    { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'dhuhr' },
-    { name: 'İkindi', nameEn: 'Asr', apiKey: 'asr' },
-    { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'maghrib' },
-    { name: 'Yatsı', nameEn: 'Isha', apiKey: 'isha' },
+    { name: 'İmsak', nameEn: 'Imsak', apiKey: 'Imsak' },
+    { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'Sunrise' },
+    { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'Dhuhr' },
+    { name: 'İkindi', nameEn: 'Asr', apiKey: 'Asr' },
+    { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'Maghrib' },
+    { name: 'Yatsı', nameEn: 'Isha', apiKey: 'Isha' },
 ];
 
 // PrayerSchedule sınıfının kopyası
@@ -84,6 +84,15 @@ class PrayerSchedule {
             }
         }
         return current;
+    }
+
+    insertPrayer(prayer) {
+        const index = this._prayers.findIndex(p => p.time > prayer.time);
+        if (index === -1) {
+            this._prayers.push(prayer);
+        } else {
+            this._prayers.splice(index, 0, prayer);
+        }
     }
 
     getPrayerByName(name) {
@@ -194,6 +203,46 @@ const partialData = {
 };
 const partialSchedule = PrayerSchedule.fromApiResponse(partialData, testDate);
 assertEqual(partialSchedule.prayers.length, 3, 'Sadece mevcut vakitler oluşturulur');
+
+// Test 6: insertPrayer - kronolojik sıra
+console.log('\n6. insertPrayer Testleri:');
+const insertSchedule = PrayerSchedule.fromApiResponse(testApiData, testDate);
+assertEqual(insertSchedule.prayers.length, 6, 'Başlangıçta 6 vakit');
+
+// Teheccüd: 03:30 - İmsak'tan (05:30) önce
+const tahajjudTime = new Date(testDate);
+tahajjudTime.setHours(3, 30, 0, 0);
+insertSchedule.insertPrayer(new PrayerTime('Teheccüd', 'Tahajjud', tahajjudTime));
+assertEqual(insertSchedule.prayers.length, 7, 'insertPrayer sonrası 7 vakit');
+assertEqual(insertSchedule.prayers[0].name, 'Teheccüd', 'Teheccüd ilk sıraya eklendi (03:30 < 05:30)');
+
+// Sahur: 05:00 - Teheccüd (03:30) ve İmsak (05:30) arasına
+const sahurTime = new Date(testDate);
+sahurTime.setHours(5, 0, 0, 0);
+insertSchedule.insertPrayer(new PrayerTime('Sahur', 'Suhur', sahurTime));
+assertEqual(insertSchedule.prayers.length, 8, 'Sahur eklendi, 8 vakit');
+assertEqual(insertSchedule.prayers[0].name, 'Teheccüd', 'Teheccüd hala ilk');
+assertEqual(insertSchedule.prayers[1].name, 'Sahur', 'Sahur ikinci sırada');
+assertEqual(insertSchedule.prayers[2].name, 'İmsak', 'İmsak üçüncü sırada');
+
+// Test 7: insertPrayer - sona ekleme (tüm vakitlerden sonra)
+console.log('\n7. insertPrayer - Sona Ekleme:');
+const lateSchedule = PrayerSchedule.fromApiResponse(testApiData, testDate);
+const lateTime = new Date(testDate);
+lateTime.setHours(23, 0, 0, 0);
+lateSchedule.insertPrayer(new PrayerTime('Gece', 'Night', lateTime));
+assertEqual(lateSchedule.prayers.length, 7, 'Sona ekleme sonrası 7 vakit');
+assertEqual(lateSchedule.prayers[6].name, 'Gece', 'Son vakit doğru');
+
+// Test 8: insertPrayer sonrası getNextPrayer doğru çalışır
+console.log('\n8. insertPrayer Sonrası getNextPrayer:');
+const at0300 = new Date(2026, 0, 16, 3, 0, 0);
+const nextAfterInsert = insertSchedule.getNextPrayer(at0300);
+assertEqual(nextAfterInsert.name, 'Teheccüd', '03:00\'da sonraki vakit Teheccüd (03:30)');
+
+const at0330 = new Date(2026, 0, 16, 3, 35, 0);
+const nextAfter0335 = insertSchedule.getNextPrayer(at0330);
+assertEqual(nextAfter0335.name, 'Sahur', '03:35\'te sonraki vakit Sahur (05:00)');
 
 // Sonuç
 console.log('\n=== Sonuç ===');

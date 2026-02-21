@@ -60,6 +60,16 @@ export class PrayerSchedule {
         return current;
     }
 
+    // Kronolojik sırayı koruyarak yeni vakit ekle
+    insertPrayer(prayer) {
+        const index = this._prayers.findIndex(p => p.time > prayer.time);
+        if (index === -1) {
+            this._prayers.push(prayer);
+        } else {
+            this._prayers.splice(index, 0, prayer);
+        }
+    }
+
     // Belirli vakti isimle bul
     getPrayerByName(name) {
         return this._prayers.find(p => p.name === name || p.nameEn === name);
