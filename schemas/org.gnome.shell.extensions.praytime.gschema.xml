@@ -111,5 +111,12 @@
       <description>Teheccüd vaktini göster ve bildirim gönder</description>
     </key>
 
+    <key name="tahajjud-offset-minutes" type="i">
+      <default>0</default>
+      <summary>Teheccüd ofseti (dakika)</summary>
+      <description>Gecenin son üçte birinden kaç dakika kaydırılsın (negatif=erken, pozitif=geç)</description>
+      <range min="-60" max="60"/>
+    </key>
+
   </schema>
 </schemalist>

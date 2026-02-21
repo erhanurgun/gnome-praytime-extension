@@ -215,6 +215,19 @@ export default class PraytimePreferences extends ExtensionPreferences {
         });
         tahajjudGroup.add(tahajjudEnabledRow);
         this._settings.bind('tahajjud-enabled', tahajjudEnabledRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+
+        const tahajjudOffsetRow = new Adw.SpinRow({
+            title: 'Teheccüd Ofseti',
+            subtitle: 'Gecenin son üçte birinden kaç dakika kaydırılsın',
+            adjustment: new Gtk.Adjustment({
+                lower: -60,
+                upper: 60,
+                step_increment: 5,
+                page_increment: 15,
+            }),
+        });
+        tahajjudGroup.add(tahajjudOffsetRow);
+        this._settings.bind('tahajjud-offset-minutes', tahajjudOffsetRow, 'value', Gio.SettingsBindFlags.DEFAULT);
     }
 
     _buildDisplayPage(page) {

@@ -27,6 +27,7 @@ export class PrayerTimeService {
         this._refreshScheduled = false;
         this._retryCount = 0;
         this._refreshInFlight = false;
+        this._lastApiResponse = null;
     }
 
     get schedule() {
@@ -79,6 +80,7 @@ export class PrayerTimeService {
         this._notificationScheduler.clearAll();
         this._schedule = null;
         this._location = null;
+        this._lastApiResponse = null;
     }
 
     async refresh() {
@@ -118,6 +120,7 @@ export class PrayerTimeService {
             const apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
             if (!this._isRunning) return;
 
+            this._lastApiResponse = apiResponse;
             this._schedule = PrayerSchedule.fromApiResponse(apiResponse.prayers, new Date());
             this._addExtraPrayers(apiResponse.meta);
 
@@ -189,6 +192,21 @@ export class PrayerTimeService {
         this._refreshPrayerTimes().catch(console.error);
     }
 
+    recalculateSchedule() {
+        if (!this._lastApiResponse || !this._isRunning) return;
+
+        this._schedule = PrayerSchedule.fromApiResponse(
+            this._lastApiResponse.prayers, new Date()
+        );
+        this._addExtraPrayers(this._lastApiResponse.meta);
+
+        this._notificationScheduler.scheduleForPrayers(
+            this._schedule.prayers,
+            (title, body) => this._onNotification?.(title, body)
+        );
+        this._triggerUpdate();
+    }
+
     _addExtraPrayers(meta) {
         if (!this._settings || !meta) return;
 
@@ -199,6 +217,8 @@ export class PrayerTimeService {
             const [h, m] = meta.lastthird.split(':').map(Number);
             const time = new Date(date);
             time.setHours(h, m, 0, 0);
+            const offset = this._settings.get_int('tahajjud-offset-minutes');
+            time.setMinutes(time.getMinutes() + offset);
             this._schedule.insertPrayer(new PrayerTime('Teheccüd', 'Tahajjud', time));
         }
 
