@@ -33,7 +33,7 @@ export class NotificationManager {
         });
 
         this._source.addNotification(notification);
-        console.log(`[Praytime] Bildirim gösterildi: ${title}`);
+        console.log(`[Praytime] Notification shown: ${title}`);
 
         // Ses çalma ayrı işlensin, bildirim gösterimini engellemez
         if (this._settings.get_boolean('notification-sound')) {
@@ -46,23 +46,23 @@ export class NotificationManager {
             // Önce ses çaları bul
             const player = this._findSoundPlayer();
             if (!player) {
-                console.log('[Praytime] Ses çalar bulunamadı (pw-play, paplay, aplay)');
+                console.log('[Praytime] No sound player found (pw-play, paplay, aplay)');
                 return;
             }
 
             // Önce proje içi ses dosyasını dene
             const soundPath = this._findSoundFile();
             if (!soundPath) {
-                console.log('[Praytime] Ses dosyası bulunamadı');
+                console.log('[Praytime] No sound file found');
                 return;
             }
 
             // Dosya yolunu tırnak içine al (boşluk içeren yollar için)
             const command = `${player} "${soundPath}"`;
             GLib.spawn_command_line_async(command);
-            console.log(`[Praytime] Bildirim sesi çalındı: ${player} -> ${soundPath}`);
+            console.log(`[Praytime] Notification sound played: ${player} -> ${soundPath}`);
         } catch (error) {
-            console.log(`[Praytime] Ses çalma hatası: ${error.message}`);
+            console.log(`[Praytime] Sound playback error: ${error.message}`);
         }
     }
 
@@ -77,7 +77,7 @@ export class NotificationManager {
             const [success] = GLib.spawn_command_line_sync(`which ${player}`);
             if (success) {
                 this._soundPlayer = player;
-                console.log(`[Praytime] Ses çalar bulundu: ${player}`);
+                console.log(`[Praytime] Sound player found: ${player}`);
                 return player;
             }
         }
@@ -93,7 +93,7 @@ export class NotificationManager {
             if (customSoundFile.query_exists(null)) {
                 return customSoundPath;
             }
-            console.log(`[Praytime] Proje ses dosyası bulunamadı: ${customSoundPath}`);
+            console.log(`[Praytime] Extension sound file not found: ${customSoundPath}`);
         }
 
         // Sistem ses dosyalarını kontrol et

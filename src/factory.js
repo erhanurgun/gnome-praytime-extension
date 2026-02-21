@@ -8,9 +8,10 @@ import { NotificationManager } from './presentation/NotificationManager.js';
 import { PanelButton } from './presentation/PanelButton.js';
 
 export class ServiceFactory {
-    constructor(settings, extension) {
+    constructor(settings, extension, gettext) {
         this._settings = settings;
         this._extension = extension;
+        this._gettext = gettext || ((s) => s);
         this._instances = new Map();
     }
 
@@ -26,7 +27,7 @@ export class ServiceFactory {
     }
 
     createApiClient() {
-        return this._getOrCreate('apiClient', () => new PrayerTimesApiClient());
+        return this._getOrCreate('apiClient', () => new PrayerTimesApiClient(this._settings));
     }
 
     createLocationProvider() {
@@ -45,7 +46,8 @@ export class ServiceFactory {
         return this._getOrCreate('notificationScheduler', () =>
             new NotificationScheduler({
                 timerAdapter: this.createTimerAdapter(),
-                settings: this._settings
+                settings: this._settings,
+                gettext: this._gettext,
             })
         );
     }
@@ -64,12 +66,27 @@ export class ServiceFactory {
             notificationScheduler: this.createNotificationScheduler(),
             settings: this._settings,
             onUpdate,
-            onNotification
+            onNotification,
+            gettext: this._gettext,
         });
     }
 
     createPanelButton() {
-        return new PanelButton(this._extension);
+        return new PanelButton(this._extension, this._gettext);
+    }
+
+    updateGettext(gettext) {
+        this._gettext = gettext || ((s) => s);
+
+        // Gettext'e bağımlı cache'li instance'ları temizle
+        const gettextKeys = ['notificationScheduler'];
+        for (const key of gettextKeys) {
+            if (this._instances.has(key)) {
+                const inst = this._instances.get(key);
+                if (typeof inst.destroy === 'function') inst.destroy();
+                this._instances.delete(key);
+            }
+        }
     }
 
     destroyAll() {
