@@ -1,5 +1,7 @@
 # Praytime - GNOME Shell Extension
 
+![Version](https://img.shields.io/badge/version-0.9.2-blue)
+
 > [Turkce dokumantasyon](README.md)
 
 Prayer times notification and panel display extension for GNOME Shell.
