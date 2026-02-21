@@ -56,6 +56,18 @@ cp -r sounds "$TARGET_DIR/"
 
 echo -e "${GREEN}[OK] Dosyalar kopyalandı${NC}"
 
+# Çeviri dosyalarını derle ve kopyala
+echo -e "${BLUE}[*] Çeviri dosyaları derleniyor...${NC}"
+for po_file in "$PROJECT_DIR"/po/*.po; do
+    if [ -f "$po_file" ]; then
+        lang=$(basename "$po_file" .po)
+        mkdir -p "$TARGET_DIR/locale/$lang/LC_MESSAGES"
+        msgfmt "$po_file" -o "$TARGET_DIR/locale/$lang/LC_MESSAGES/${EXTENSION_UUID}.mo"
+        echo -e "  ${GREEN}[OK]${NC} $lang"
+    fi
+done
+echo -e "${GREEN}[OK] Çeviri dosyaları derlendi${NC}"
+
 # Schema derle
 echo -e "${BLUE}[*] Schema derleniyor...${NC}"
 glib-compile-schemas "$TARGET_DIR/schemas/"
