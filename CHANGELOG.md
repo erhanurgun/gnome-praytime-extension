@@ -2,6 +2,46 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.9.0] - 2026-02-21
+
+### Eklendi
+- Uluslararasılaştırma (i18n): Türkçe ve İngilizce dil desteği
+- Manuel dil seçimi (Otomatik/Türkçe/İngilizce) - sistem dilinden bağımsız
+- Dünya geneli konum desteği: Herhangi bir ülke ve şehir ile kullanılabilir
+- Koordinat bazlı konum modu (enlem/boylam ile vakit hesaplama)
+- 24 farklı hesaplama metodu seçeneği (ISNA, MWL, Diyanet, Umm Al-Qura vb.)
+- İngilizce README dokümantasyonu (README.en.md)
+- Gettext altyapısı (.pot, .po, .mo çeviri dosyaları)
+- Hibrit gettext wrapper (auto/tr/en dil modu desteği)
+
+### Değişti
+- Konum ayarları sayfası tamamen yeniden tasarlandı
+  - Konum modu seçimi (Şehir/Ülke veya Enlem/Boylam)
+  - Ülke metin girişi (serbest yazım, varsayılan Turkey)
+  - Türkiye dışındaki ülkeler için şehir adı metin girişi
+  - Koordinat girişi (SpinRow ile hassas değer)
+- Namaz vakitleri dahili olarak id bazlı eşleme kullanıyor (çeviri bağımsız)
+- Hata mesajı karşılaştırmaları ERROR_CODES sabitlerini kullanıyor
+- Tüm console log mesajları İngilizce'ye çevrildi (geliştirici araçları için)
+- Build ve install scriptleri çeviri derleme adımını içeriyor
+
+### Teknik
+- N_() pattern: Modül yükleme zamanında güvenli string işaretleme (xgettext uyumlu)
+- PRAYER_NAMES'e id alanı eklendi (imsak, gunes, ogle, ikindi, aksam, yatsi)
+- PrayerTime modeline id parametresi eklendi (ilk constructor argümanı)
+- PrayerSchedule.getPrayerById() metodu eklendi
+- PrayerSchedule.fromApiResponse() gettext parametresi alıyor
+- Location constructor'ı options nesnesi alıyor (mode, cityName, countryName, latitude, longitude)
+- LocationProvider: location-mode, country-name, latitude, longitude GSettings key'leri
+- PrayerTimesApiClient: Çift endpoint desteği (timingsByCity + timings), dinamik hesaplama metodu
+- ServiceFactory'ye gettext parametresi dağıtımı eklendi
+- extension.js: Debounce mekanizması (city-name/country-name metin girişleri için 2s gecikme)
+- 6 yeni GSettings key: language, location-mode, country-name, latitude, longitude, calculation-method
+- src/i18n/gettext.js: Hibrit çeviri wrapper (auto: sistem gettext, tr: identity, en: JSON tablosu)
+- po/: POTFILES.in, LINGUAS, .pot şablonu, tr.po, en.po çeviri dosyaları
+- String.prototype.format() polyfill (test ortamı için)
+- Tüm testler güncellendi (id bazlı eşleme, ERROR_CODES, yeni constructor imzaları)
+
 ## [0.8.1] - 2026-02-21
 
 ### Eklendi
