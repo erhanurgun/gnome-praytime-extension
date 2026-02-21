@@ -2,6 +2,19 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [0.9.2] - 2026-02-22
+
+### Eklendi
+- Panel menüsüne 12 yeni SVG sembolik ikon (namaz vakitleri, konum, ayarlar, yenileme, bilgi)
+- `_getMenuIcon()`, `_getPrayerIcon()`, `_createPrayerItem()` metodları (PanelButton.js)
+- Namaz vakitleri ve aksiyon butonları için ikon desteği
+- Yeni CSS stilleri: aksiyon butonları, zaman etiketi, başlık ve bölücü
+
+### Değiştirildi
+- Panel menüsü UI tamamen yenilendi (ikonlu vakit gösterimi, stilize butonlar)
+- Ayarlar penceresi boyutu sabitlendi (660x770)
+- Eski `.praytime-settings-item` stili kaldırılıp yeni bileşen stilleri ile değiştirildi
+
 ## [0.9.1] - 2026-02-21
 
 ### Eklendi
