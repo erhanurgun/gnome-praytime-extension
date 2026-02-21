@@ -5,6 +5,7 @@ const { MockApiClient } = require('../mocks/MockApiClient.js');
 const { MockLocationProvider, Location } = require('../mocks/MockLocationProvider.js');
 const { MockNotificationScheduler } = require('../mocks/MockNotificationScheduler.js');
 const { MockTimerAdapter } = require('../mocks/MockTimerAdapter.js');
+const { MockSettings } = require('../mocks/MockSettings.js');
 
 // PrayerTime sınıfının kopyası
 class PrayerTime {
@@ -35,12 +36,12 @@ class PrayerTime {
 
 // PRAYER_NAMES sabiti
 const PRAYER_NAMES = [
-    { name: 'İmsak', nameEn: 'Fajr', apiKey: 'fajr' },
-    { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'sun' },
-    { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'dhuhr' },
-    { name: 'İkindi', nameEn: 'Asr', apiKey: 'asr' },
-    { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'maghrib' },
-    { name: 'Yatsı', nameEn: 'Isha', apiKey: 'isha' },
+    { name: 'İmsak', nameEn: 'Imsak', apiKey: 'Imsak' },
+    { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'Sunrise' },
+    { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'Dhuhr' },
+    { name: 'İkindi', nameEn: 'Asr', apiKey: 'Asr' },
+    { name: 'Akşam', nameEn: 'Maghrib', apiKey: 'Maghrib' },
+    { name: 'Yatsı', nameEn: 'Isha', apiKey: 'Isha' },
 ];
 
 // PrayerSchedule sınıfının kopyası
@@ -54,13 +55,8 @@ class PrayerSchedule {
     get date() { return this._date; }
 
     static fromApiResponse(data, date = new Date()) {
-        if (!data || !Array.isArray(data) || data.length === 0) {
-            return new PrayerSchedule([]);
-        }
-
-        const todayData = data[0];
         const prayers = PRAYER_NAMES.map(p => {
-            const timeStr = todayData[p.apiKey];
+            const timeStr = data[p.name];
             if (!timeStr) return null;
 
             const [hours, minutes] = timeStr.split(':').map(Number);
@@ -83,9 +79,34 @@ class PrayerSchedule {
         }
         return null;
     }
+
+    getCurrentPrayer(fromDate = new Date()) {
+        let current = null;
+        for (const prayer of this._prayers) {
+            if (prayer.isPassed(fromDate)) {
+                current = prayer;
+            } else {
+                break;
+            }
+        }
+        return current;
+    }
+
+    insertPrayer(prayer) {
+        const index = this._prayers.findIndex(p => p.time > prayer.time);
+        if (index === -1) {
+            this._prayers.push(prayer);
+        } else {
+            this._prayers.splice(index, 0, prayer);
+        }
+    }
+
+    getPrayerByName(name) {
+        return this._prayers.find(p => p.name === name || p.nameEn === name);
+    }
 }
 
-// MockTimerManager (TimerManager'ın mock versiyonu)
+// MockTimerManager (TimerManager'ın mock versiyonu - yeni metodlarla)
 class MockTimerManager {
     constructor(timerAdapter) {
         this._adapter = timerAdapter || new MockTimerAdapter();
@@ -93,10 +114,19 @@ class MockTimerManager {
         this._refreshCallback = null;
         this._countdownTimerId = null;
         this._refreshTimerId = null;
+        this._retryTimerId = null;
+        this._retryCallback = null;
+        this._retryDelay = null;
         this._destroyed = false;
+        this._isRunning = false;
+    }
+
+    get isRunning() {
+        return this._isRunning;
     }
 
     startCountdown(callback) {
+        this._isRunning = true;
         this._countdownCallback = callback;
         this._countdownTimerId = this._adapter.setInterval(() => {
             if (this._countdownCallback) {
@@ -114,7 +144,32 @@ class MockTimerManager {
         }, 86400);
     }
 
+    scheduleOnce(callback, seconds) {
+        return this._adapter.setTimeout(callback, seconds);
+    }
+
+    scheduleRetry(callback, seconds) {
+        this.clearRetry();
+        this._retryCallback = callback;
+        this._retryDelay = seconds;
+        this._retryTimerId = this._adapter.setTimeout(() => {
+            this._retryTimerId = null;
+            callback();
+        }, seconds);
+    }
+
+    clearRetry() {
+        if (this._retryTimerId) {
+            this._adapter.clearTimer(this._retryTimerId);
+            this._retryTimerId = null;
+        }
+        this._retryCallback = null;
+        this._retryDelay = null;
+    }
+
     stop() {
+        this._isRunning = false;
+        this.clearRetry();
         if (this._countdownTimerId) {
             this._adapter.clearTimer(this._countdownTimerId);
             this._countdownTimerId = null;
@@ -136,7 +191,7 @@ class MockTimerManager {
         return this._destroyed;
     }
 
-    // Test için yardımcı metodlar
+    // Test yardımcıları
     triggerCountdown() {
         if (this._countdownCallback) {
             this._countdownCallback();
@@ -148,6 +203,20 @@ class MockTimerManager {
             this._refreshCallback();
         }
     }
+
+    triggerRetry() {
+        if (this._retryTimerId) {
+            this._adapter.triggerTimer(this._retryTimerId);
+        }
+    }
+
+    getRetryDelay() {
+        return this._retryDelay;
+    }
+
+    hasRetryScheduled() {
+        return this._retryTimerId !== null;
+    }
 }
 
 // PrayerTimeService sınıfının kopyası (test için bağımsız)
@@ -158,6 +227,7 @@ class PrayerTimeService {
             locationProvider,
             timerManager,
             notificationScheduler,
+            settings,
             onUpdate,
             onNotification
         } = dependencies;
@@ -166,12 +236,16 @@ class PrayerTimeService {
         this._locationProvider = locationProvider;
         this._timerManager = timerManager;
         this._notificationScheduler = notificationScheduler;
+        this._settings = settings;
         this._onUpdate = onUpdate;
         this._onNotification = onNotification;
 
         this._schedule = null;
         this._location = null;
         this._isRunning = false;
+        this._refreshScheduled = false;
+        this._retryCount = 0;
+        this._refreshInFlight = false;
     }
 
     get schedule() {
@@ -196,7 +270,10 @@ class PrayerTimeService {
     }
 
     async start() {
+        if (this._refreshInFlight) return;
         this._isRunning = true;
+        this._retryCount = 0;
+
         try {
             await this._refreshPrayerTimes();
             if (!this._isRunning) return;
@@ -204,46 +281,150 @@ class PrayerTimeService {
             this._timerManager.startCountdown(() => this._onCountdownTick());
             this._timerManager.scheduleDailyRefresh(() => this._onDailyRefresh());
         } catch (error) {
+            if (!this._isRunning) return;
             this._schedule = null;
             this._triggerUpdate();
+            this._scheduleRetry();
         }
     }
 
     stop() {
         this._isRunning = false;
+        this._retryCount = 0;
+        this._refreshInFlight = false;
         this._timerManager.stop();
         this._notificationScheduler.clearAll();
         this._schedule = null;
         this._location = null;
     }
 
-    async _refreshPrayerTimes() {
-        this._location = this._locationProvider.getLocation();
+    async refresh() {
+        this._retryCount = 0;
+        this._timerManager.clearRetry();
 
-        if (!this._location?.isValid()) {
-            throw new Error('Geçersiz konum');
+        try {
+            await this._refreshPrayerTimes();
+            if (!this._isRunning) return;
+
+            if (!this._timerManager.isRunning) {
+                this._timerManager.startCountdown(() => this._onCountdownTick());
+                this._timerManager.scheduleDailyRefresh(() => this._onDailyRefresh());
+            }
+        } catch (error) {
+            if (!this._isRunning) return;
+            this._schedule = null;
+            this._triggerUpdate();
+            if (error.message !== 'Geçersiz konum') {
+                this._scheduleRetry();
+            }
         }
+    }
 
-        const apiData = await this._apiClient.fetchPrayerTimes(this._location.id);
-        this._schedule = PrayerSchedule.fromApiResponse(apiData, new Date());
+    async _refreshPrayerTimes() {
+        if (this._refreshInFlight) return;
+        this._refreshInFlight = true;
 
-        this._notificationScheduler.scheduleForPrayers(
-            this._schedule.prayers,
-            (title, body) => this._onNotification?.(title, body)
-        );
+        try {
+            this._location = this._locationProvider.getLocation();
 
-        this._triggerUpdate();
+            if (!this._location?.isValid()) {
+                throw new Error('Geçersiz konum');
+            }
+
+            const apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
+            if (!this._isRunning) return;
+
+            this._schedule = PrayerSchedule.fromApiResponse(apiResponse.prayers, new Date());
+            this._addExtraPrayers(apiResponse.meta);
+
+            this._notificationScheduler.scheduleForPrayers(
+                this._schedule.prayers,
+                (title, body) => this._onNotification?.(title, body)
+            );
+
+            this._triggerUpdate();
+        } finally {
+            this._refreshInFlight = false;
+        }
+    }
+
+    _scheduleRetry() {
+        if (!this._isRunning) return;
+
+        const delays = [15, 30, 60, 120, 300];
+        const delay = delays[Math.min(this._retryCount, delays.length - 1)];
+        this._retryCount++;
+
+        this._timerManager.scheduleRetry(() => this._attemptRecovery(), delay);
+    }
+
+    async _attemptRecovery() {
+        if (!this._isRunning) return;
+
+        try {
+            await this._refreshPrayerTimes();
+            if (!this._isRunning) return;
+
+            this._retryCount = 0;
+            if (!this._timerManager.isRunning) {
+                this._timerManager.startCountdown(() => this._onCountdownTick());
+                this._timerManager.scheduleDailyRefresh(() => this._onDailyRefresh());
+            }
+        } catch (error) {
+            if (!this._isRunning) return;
+            this._schedule = null;
+            this._triggerUpdate();
+
+            if (error.message !== 'Geçersiz konum') {
+                this._scheduleRetry();
+            }
+        }
     }
 
     _onCountdownTick() {
         this._triggerUpdate();
-        if (!this.getNextPrayer()) {
-            this._refreshPrayerTimes().catch(() => {});
+        if (!this.getNextPrayer() && !this._refreshScheduled) {
+            this._refreshScheduled = true;
+            this._timerManager.scheduleOnce(() => {
+                this._refreshScheduled = false;
+                this._refreshPrayerTimes().catch(() => {});
+            }, 3);
         }
     }
 
     _onDailyRefresh() {
         this._refreshPrayerTimes().catch(() => {});
+    }
+
+    _addExtraPrayers(meta) {
+        if (!this._settings || !meta) return;
+
+        const date = this._schedule.date;
+
+        if (this._settings.get_boolean('tahajjud-enabled') && meta.lastthird) {
+            const [h, m] = meta.lastthird.split(':').map(Number);
+            const time = new Date(date);
+            time.setHours(h, m, 0, 0);
+            this._schedule.insertPrayer(new PrayerTime('Teheccüd', 'Tahajjud', time));
+        }
+
+        if (this._isSahurEnabled(meta.hijriMonth)) {
+            const imsak = this._schedule.getPrayerByName('İmsak');
+            if (imsak) {
+                const minutes = this._settings.get_int('sahur-minutes-before');
+                const time = new Date(imsak.time);
+                time.setMinutes(time.getMinutes() - minutes);
+                this._schedule.insertPrayer(new PrayerTime('Sahur', 'Suhur', time));
+            }
+        }
+    }
+
+    _isSahurEnabled(hijriMonth) {
+        if (!this._settings.get_boolean('sahur-enabled')) return false;
+        const mode = this._settings.get_string('ramadan-mode');
+        if (mode === 'on') return true;
+        if (mode === 'off') return false;
+        return hijriMonth === 9;
     }
 
     _triggerUpdate() {
@@ -290,19 +471,30 @@ function assertEqual(actual, expected, message) {
 function createService(overrides = {}) {
     const apiClient = overrides.apiClient || new MockApiClient();
     const locationProvider = overrides.locationProvider || new MockLocationProvider();
-    const timerManager = overrides.timerManager || new MockTimerManager();
+    const timerAdapter = new MockTimerAdapter();
+    const timerManager = overrides.timerManager || new MockTimerManager(timerAdapter);
     const notificationScheduler = overrides.notificationScheduler || new MockNotificationScheduler();
+    const settings = overrides.settings || new MockSettings();
     const onUpdate = overrides.onUpdate || (() => {});
     const onNotification = overrides.onNotification || (() => {});
 
-    return new PrayerTimeService({
+    return {
+        service: new PrayerTimeService({
+            apiClient,
+            locationProvider,
+            timerManager,
+            notificationScheduler,
+            settings,
+            onUpdate,
+            onNotification
+        }),
         apiClient,
         locationProvider,
         timerManager,
+        timerAdapter,
         notificationScheduler,
-        onUpdate,
-        onNotification
-    });
+        settings
+    };
 }
 
 // Testler
@@ -314,6 +506,7 @@ const apiClient1 = new MockApiClient();
 const locationProvider1 = new MockLocationProvider();
 const timerManager1 = new MockTimerManager();
 const notificationScheduler1 = new MockNotificationScheduler();
+const settings1 = new MockSettings();
 let updateCount = 0;
 
 const service1 = new PrayerTimeService({
@@ -321,6 +514,7 @@ const service1 = new PrayerTimeService({
     locationProvider: locationProvider1,
     timerManager: timerManager1,
     notificationScheduler: notificationScheduler1,
+    settings: settings1,
     onUpdate: () => updateCount++,
     onNotification: () => {}
 });
@@ -331,6 +525,8 @@ assert(service1._timerManager === timerManager1, 'Timer manager inject edildi');
 assert(service1._notificationScheduler === notificationScheduler1, 'Notification scheduler inject edildi');
 assertEqual(service1.schedule, null, 'Başlangıçta schedule null');
 assertEqual(service1.location, null, 'Başlangıçta location null');
+assertEqual(service1._retryCount, 0, 'Başlangıçta retryCount 0');
+assertEqual(service1._refreshInFlight, false, 'Başlangıçta refreshInFlight false');
 
 // Test 2: start() metodu - başarılı senaryo
 console.log('\n2. start() Metodu - Başarılı Senaryo:');
@@ -358,8 +554,9 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     assertEqual(service2.location.cityName, 'Ankara', 'Doğru konum kullanıldı');
     assert(updateCalled, 'onUpdate callback çağrıldı');
     assertEqual(apiClient2.getFetchCount(), 1, 'API bir kez çağrıldı');
-    assertEqual(apiClient2.getLastLocationId(), 9206, 'Doğru location ID ile API çağrıldı');
+    assertEqual(apiClient2.getLastLocation().cityName, 'Ankara', 'Doğru location ile API çağrıldı');
     assert(notificationScheduler2.getScheduleCount() > 0, 'Bildirimler zamanlandı');
+    assertEqual(timerManager2.isRunning, true, 'Timer çalışıyor');
 
     // Test 3: getNextPrayer()
     console.log('\n3. getNextPrayer() Metodu:');
@@ -371,71 +568,40 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     service2.stop();
     assertEqual(service2.schedule, null, 'stop() sonrası schedule null');
     assertEqual(service2.location, null, 'stop() sonrası location null');
+    assertEqual(service2._retryCount, 0, 'stop() sonrası retryCount sıfırlandı');
+    assertEqual(service2._refreshInFlight, false, 'stop() sonrası refreshInFlight sıfırlandı');
     assertEqual(notificationScheduler2.getClearCount(), 1, 'Bildirimler temizlendi');
 
-    // Test 5: start() ile API hatası
-    console.log('\n5. start() ile API Hatası:');
-    const apiClient5 = new MockApiClient();
-    apiClient5.setError(true, 'Bağlantı hatası');
-    const locationProvider5 = new MockLocationProvider();
-    const timerManager5 = new MockTimerManager();
-    const notificationScheduler5 = new MockNotificationScheduler();
-    let errorUpdateCalled = false;
-
-    const service5 = new PrayerTimeService({
-        apiClient: apiClient5,
-        locationProvider: locationProvider5,
-        timerManager: timerManager5,
-        notificationScheduler: notificationScheduler5,
-        onUpdate: () => { errorUpdateCalled = true; },
-        onNotification: () => {}
+    // Test 5: start() ile API hatası - retry zamanlanmalı
+    console.log('\n5. start() ile API Hatası - Retry Zamanlanır:');
+    const { service: service5, apiClient: ac5, timerManager: tm5 } = createService({
+        apiClient: (() => { const c = new MockApiClient(); c.setError(true, 'Bağlantı hatası'); return c; })(),
+        onUpdate: () => {}
     });
 
     await service5.start();
     assertEqual(service5.schedule, null, 'API hatası sonrası schedule null');
-    assert(errorUpdateCalled, 'Hata durumunda da onUpdate çağrıldı');
+    assert(tm5.hasRetryScheduled(), 'Retry zamanlandı');
+    assertEqual(tm5.getRetryDelay(), 15, 'İlk retry 15 saniye');
 
     // Test 6: Geçersiz konum ile start()
     console.log('\n6. Geçersiz Konum ile start():');
-    const apiClient6 = new MockApiClient();
-    const locationProvider6 = new MockLocationProvider();
-    locationProvider6.setInvalidLocation();
-    const timerManager6 = new MockTimerManager();
-    const notificationScheduler6 = new MockNotificationScheduler();
-
-    const service6 = new PrayerTimeService({
-        apiClient: apiClient6,
-        locationProvider: locationProvider6,
-        timerManager: timerManager6,
-        notificationScheduler: notificationScheduler6,
-        onUpdate: () => {},
-        onNotification: () => {}
+    const { service: service6, apiClient: ac6, timerManager: tm6 } = createService({
+        locationProvider: (() => { const lp = new MockLocationProvider(); lp.setInvalidLocation(); return lp; })(),
     });
 
     await service6.start();
     assertEqual(service6.schedule, null, 'Geçersiz konum ile schedule null');
-    assertEqual(apiClient6.getFetchCount(), 0, 'Geçersiz konumda API çağrılmadı');
+    assertEqual(ac6.getFetchCount(), 0, 'Geçersiz konumda API çağrılmadı');
 
     // Test 7: rescheduleNotifications()
     console.log('\n7. rescheduleNotifications() Metodu:');
-    const apiClient7 = new MockApiClient();
-    const locationProvider7 = new MockLocationProvider();
-    const timerManager7 = new MockTimerManager();
-    const notificationScheduler7 = new MockNotificationScheduler();
-
-    const service7 = new PrayerTimeService({
-        apiClient: apiClient7,
-        locationProvider: locationProvider7,
-        timerManager: timerManager7,
-        notificationScheduler: notificationScheduler7,
-        onUpdate: () => {},
-        onNotification: () => {}
-    });
+    const { service: service7, notificationScheduler: ns7 } = createService();
 
     await service7.start();
-    const scheduleCountBefore = notificationScheduler7.getScheduleCount();
+    const scheduleCountBefore = ns7.getScheduleCount();
     service7.rescheduleNotifications();
-    const scheduleCountAfter = notificationScheduler7.getScheduleCount();
+    const scheduleCountAfter = ns7.getScheduleCount();
     assert(scheduleCountAfter > scheduleCountBefore, 'rescheduleNotifications bildirim sayısını artırdı');
 
     // Test 8: destroy() metodu
@@ -464,19 +630,10 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
 
     // Test 9: Bildirim callback'i
     console.log('\n9. Bildirim Callback Testi:');
-    const apiClient9 = new MockApiClient();
-    const locationProvider9 = new MockLocationProvider();
-    const timerManager9 = new MockTimerManager();
-    const notificationScheduler9 = new MockNotificationScheduler();
     let notificationTitle = null;
     let notificationBody = null;
 
-    const service9 = new PrayerTimeService({
-        apiClient: apiClient9,
-        locationProvider: locationProvider9,
-        timerManager: timerManager9,
-        notificationScheduler: notificationScheduler9,
-        onUpdate: () => {},
+    const { service: service9, notificationScheduler: ns9 } = createService({
         onNotification: (title, body) => {
             notificationTitle = title;
             notificationBody = body;
@@ -484,20 +641,318 @@ console.log('\n2. start() Metodu - Başarılı Senaryo:');
     });
 
     await service9.start();
-    assert(notificationScheduler9.hasCallback(), 'Bildirim callback ayarlandı');
+    assert(ns9.hasCallback(), 'Bildirim callback ayarlandı');
 
-    // Bildirim tetikle
-    notificationScheduler9.triggerNotification('Test Başlık', 'Test İçerik');
+    ns9.triggerNotification('Test Başlık', 'Test İçerik');
     assertEqual(notificationTitle, 'Test Başlık', 'Bildirim başlığı doğru');
     assertEqual(notificationBody, 'Test İçerik', 'Bildirim içeriği doğru');
 
     // Test 10: Schedule olmadan rescheduleNotifications
     console.log('\n10. Schedule Olmadan rescheduleNotifications:');
-    const service10 = createService();
-    const schedulerBefore = service10._notificationScheduler.getScheduleCount();
+    const { service: service10, notificationScheduler: ns10 } = createService();
+    const schedulerBefore = ns10.getScheduleCount();
     service10.rescheduleNotifications();
-    const schedulerAfter = service10._notificationScheduler.getScheduleCount();
+    const schedulerAfter = ns10.getScheduleCount();
     assertEqual(schedulerBefore, schedulerAfter, 'Schedule yokken reschedule bir şey yapmaz');
+
+    // Test 11: Retry - exponential backoff
+    console.log('\n11. Retry - Exponential Backoff:');
+    const { service: service11, apiClient: ac11, timerManager: tm11, timerAdapter: ta11 } = createService({
+        apiClient: (() => { const c = new MockApiClient(); c.setError(true, 'Ağ hatası'); return c; })(),
+    });
+
+    await service11.start();
+    assertEqual(tm11.getRetryDelay(), 15, '1. retry: 15s');
+
+    // Retry tetikle - hala hata verecek
+    await service11._attemptRecovery();
+    assertEqual(tm11.getRetryDelay(), 30, '2. retry: 30s');
+
+    await service11._attemptRecovery();
+    assertEqual(tm11.getRetryDelay(), 60, '3. retry: 60s');
+
+    await service11._attemptRecovery();
+    assertEqual(tm11.getRetryDelay(), 120, '4. retry: 120s');
+
+    await service11._attemptRecovery();
+    assertEqual(tm11.getRetryDelay(), 300, '5. retry: 300s (maksimum)');
+
+    await service11._attemptRecovery();
+    assertEqual(tm11.getRetryDelay(), 300, '6. retry: 300s (sabit kalır)');
+
+    // Test 12: Retry - başarılı kurtarma
+    console.log('\n12. Retry - Başarılı Kurtarma:');
+    const failingApiClient = new MockApiClient();
+    failingApiClient.setError(true, 'Ağ hatası');
+
+    const { service: service12, timerManager: tm12 } = createService({
+        apiClient: failingApiClient,
+    });
+
+    await service12.start();
+    assert(tm12.hasRetryScheduled(), 'Hata sonrası retry zamanlandı');
+    assertEqual(service12.schedule, null, 'Hata sonrası schedule null');
+
+    // Ağ düzeldi
+    failingApiClient.setError(false);
+    await service12._attemptRecovery();
+    assert(service12.schedule !== null, 'Kurtarma sonrası schedule yüklendi');
+    assertEqual(service12._retryCount, 0, 'Kurtarma sonrası retryCount sıfırlandı');
+    assertEqual(tm12.isRunning, true, 'Kurtarma sonrası timer çalışıyor');
+
+    // Test 13: refresh() - Manuel yenileme
+    console.log('\n13. refresh() - Manuel Yenileme:');
+    const { service: service13, timerManager: tm13 } = createService();
+    await service13.start();
+
+    const scheduleBefore = service13.schedule;
+    await service13.refresh();
+    assert(service13.schedule !== null, 'Manuel yenileme sonrası schedule mevcut');
+
+    // Test 14: refresh() - Hata durumunda retry
+    console.log('\n14. refresh() - Hata Durumunda Retry:');
+    const failingApi14 = new MockApiClient();
+    const { service: service14, timerManager: tm14 } = createService({
+        apiClient: failingApi14,
+    });
+
+    await service14.start();
+    failingApi14.setError(true, 'Ağ hatası');
+
+    await service14.refresh();
+    assertEqual(service14.schedule, null, 'Hata sonrası schedule null');
+    assert(tm14.hasRetryScheduled(), 'Manuel yenileme hatası sonrası retry zamanlandı');
+    assertEqual(service14._retryCount, 1, 'retryCount artırıldı');
+
+    // Test 15: refresh() - Konum hatası retry yapmamalı
+    console.log('\n15. refresh() - Konum Hatası Retry Yapmamalı:');
+    const { service: service15, timerManager: tm15, locationProvider: lp15 } = createService();
+    await service15.start();
+
+    lp15.setInvalidLocation();
+    tm15.clearRetry(); // temiz durumda başla
+    await service15.refresh();
+    assert(!tm15.hasRetryScheduled(), 'Konum hatası retry zamanlamaz');
+
+    // Test 16: Race condition koruması - eşzamanlı refresh
+    console.log('\n16. Race Condition Koruması:');
+    const slowApiClient = new MockApiClient();
+    let fetchPromiseResolve;
+    const originalFetch = slowApiClient.fetchPrayerTimes.bind(slowApiClient);
+    let fetchCallCount = 0;
+    slowApiClient.fetchPrayerTimes = (location) => {
+        fetchCallCount++;
+        return originalFetch(location);
+    };
+
+    const { service: service16, timerManager: tm16 } = createService({
+        apiClient: slowApiClient,
+    });
+
+    await service16.start();
+    fetchCallCount = 0;
+
+    // _refreshInFlight guard testi
+    service16._refreshInFlight = true;
+    await service16._refreshPrayerTimes();
+    assertEqual(fetchCallCount, 0, 'refreshInFlight=true iken API çağrılmaz');
+    service16._refreshInFlight = false;
+
+    // Test 17: start() çift çağrı koruması
+    console.log('\n17. start() Çift Çağrı Koruması:');
+    const { service: service17, apiClient: ac17, timerManager: tm17 } = createService();
+    service17._refreshInFlight = true;
+    await service17.start();
+    assertEqual(ac17.getFetchCount(), 0, 'refreshInFlight=true iken start() API çağırmaz');
+    service17._refreshInFlight = false;
+
+    // Test 18: Destroy sırasında güvenlik
+    console.log('\n18. Destroy Sırasında Güvenlik:');
+    const { service: service18, timerManager: tm18 } = createService();
+    await service18.start();
+    service18.destroy();
+
+    // destroy sonrası _attemptRecovery güvenli olmalı
+    await service18._attemptRecovery(); // hata vermemeli
+    assert(true, 'destroy sonrası attemptRecovery hata vermez');
+
+    // Test 19: refresh() - timer zaten çalışıyorsa tekrar başlatmamalı
+    console.log('\n19. refresh() - Timer Duplikasyonu Koruması:');
+    const { service: service19, timerManager: tm19 } = createService();
+    await service19.start();
+    assertEqual(tm19.isRunning, true, 'start sonrası timer çalışıyor');
+
+    // refresh çağrıldığında isRunning=true olduğundan timer'ları yeniden başlatmamalı
+    await service19.refresh();
+    assert(true, 'refresh() timer duplikasyonu yaratmaz');
+
+    // Test 20: refresh() retryCount ve retry timer'ı sıfırlar
+    console.log('\n20. refresh() - retryCount ve Retry Timer Sıfırlama:');
+    const failingApi20 = new MockApiClient();
+    failingApi20.setError(true, 'Ağ hatası');
+    const { service: service20, timerManager: tm20 } = createService({
+        apiClient: failingApi20,
+    });
+
+    await service20.start();
+    assert(tm20.hasRetryScheduled(), 'Hata sonrası retry aktif');
+    assert(service20._retryCount > 0, 'retryCount > 0');
+
+    // Manuel refresh retry durumunu sıfırlar
+    failingApi20.setError(false);
+    await service20.refresh();
+    assertEqual(service20._retryCount, 0, 'refresh() retryCount sıfırlar');
+
+    // Test 21: Teheccüd ekleme - toggle açık
+    console.log('\n21. Teheccüd Ekleme - Toggle Açık:');
+    const settings21 = new MockSettings({ 'tahajjud-enabled': true });
+    const { service: service21 } = createService({ settings: settings21 });
+    await service21.start();
+    const tahajjud21 = service21.schedule.getPrayerByName('Teheccüd');
+    assert(tahajjud21 !== undefined, 'Teheccüd vakti eklendi');
+    assertEqual(tahajjud21.timeString, '03:30', 'Teheccüd saati doğru (Lastthird)');
+
+    // Teheccüd kronolojik sırada olmalı (03:30 < 05:30 İmsak)
+    const prayers21 = service21.schedule.prayers;
+    const tahajjudIdx = prayers21.findIndex(p => p.name === 'Teheccüd');
+    const imsakIdx = prayers21.findIndex(p => p.name === 'İmsak');
+    assert(tahajjudIdx < imsakIdx, 'Teheccüd İmsak\'tan önce sıralı');
+
+    // Test 22: Teheccüd eklenmemeli - toggle kapalı
+    console.log('\n22. Teheccüd - Toggle Kapalı:');
+    const settings22 = new MockSettings({ 'tahajjud-enabled': false });
+    const { service: service22 } = createService({ settings: settings22 });
+    await service22.start();
+    const tahajjud22 = service22.schedule.getPrayerByName('Teheccüd');
+    assertEqual(tahajjud22, undefined, 'Toggle kapalıyken Teheccüd eklenmez');
+
+    // Test 23: Sahur - Ramazan modu "on" (her zaman açık)
+    console.log('\n23. Sahur - Ramazan Modu "on":');
+    const settings23 = new MockSettings({
+        'ramadan-mode': 'on',
+        'sahur-enabled': true,
+        'sahur-minutes-before': 30,
+    });
+    const { service: service23 } = createService({ settings: settings23 });
+    await service23.start();
+    const sahur23 = service23.schedule.getPrayerByName('Sahur');
+    assert(sahur23 !== undefined, 'Ramazan modu "on" ile Sahur eklendi');
+    assertEqual(sahur23.timeString, '05:00', 'Sahur saati = İmsak(05:30) - 30dk = 05:00');
+
+    // Sahur İmsak'tan önce olmalı
+    const prayers23 = service23.schedule.prayers;
+    const sahurIdx23 = prayers23.findIndex(p => p.name === 'Sahur');
+    const imsakIdx23 = prayers23.findIndex(p => p.name === 'İmsak');
+    assert(sahurIdx23 < imsakIdx23, 'Sahur İmsak\'tan önce sıralı');
+
+    // Test 24: Sahur - Ramazan modu "auto" Hicri 9. ay (Ramazan)
+    console.log('\n24. Sahur - Auto Mod, Ramazan Ayı (Hicri 9):');
+    const ramazanApi = new MockApiClient();
+    ramazanApi.setMockData({
+        prayers: {
+            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
+            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+        },
+        meta: { lastthird: '03:30', hijriMonth: 9 }
+    });
+    const settings24 = new MockSettings({
+        'ramadan-mode': 'auto',
+        'sahur-enabled': true,
+        'sahur-minutes-before': 30,
+    });
+    const { service: service24 } = createService({ apiClient: ramazanApi, settings: settings24 });
+    await service24.start();
+    const sahur24 = service24.schedule.getPrayerByName('Sahur');
+    assert(sahur24 !== undefined, 'Hicri 9. ay (Ramazan) ile auto modda Sahur eklendi');
+
+    // Test 25: Sahur - Ramazan modu "auto" Hicri 8. ay (Ramazan değil)
+    console.log('\n25. Sahur - Auto Mod, Ramazan Dışı (Hicri 8):');
+    const settings25 = new MockSettings({
+        'ramadan-mode': 'auto',
+        'sahur-enabled': true,
+    });
+    // Default mock data hijriMonth: 8 döner
+    const { service: service25 } = createService({ settings: settings25 });
+    await service25.start();
+    const sahur25 = service25.schedule.getPrayerByName('Sahur');
+    assertEqual(sahur25, undefined, 'Ramazan dışında auto modda Sahur eklenmez');
+
+    // Test 26: Sahur - Ramazan modu "off"
+    console.log('\n26. Sahur - Ramazan Modu "off":');
+    const ramazanApi26 = new MockApiClient();
+    ramazanApi26.setMockData({
+        prayers: {
+            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
+            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+        },
+        meta: { lastthird: '03:30', hijriMonth: 9 }
+    });
+    const settings26 = new MockSettings({
+        'ramadan-mode': 'off',
+        'sahur-enabled': true,
+    });
+    const { service: service26 } = createService({ apiClient: ramazanApi26, settings: settings26 });
+    await service26.start();
+    const sahur26 = service26.schedule.getPrayerByName('Sahur');
+    assertEqual(sahur26, undefined, 'Ramazan modu "off" ile Sahur eklenmez');
+
+    // Test 27: Sahur toggle kapalı
+    console.log('\n27. Sahur - Toggle Kapalı:');
+    const settings27 = new MockSettings({
+        'ramadan-mode': 'on',
+        'sahur-enabled': false,
+    });
+    const { service: service27 } = createService({ settings: settings27 });
+    await service27.start();
+    const sahur27 = service27.schedule.getPrayerByName('Sahur');
+    assertEqual(sahur27, undefined, 'sahur-enabled=false ile Sahur eklenmez');
+
+    // Test 28: Sahur süresi değişikliği
+    console.log('\n28. Sahur Süresi Değişikliği:');
+    const settings28 = new MockSettings({
+        'ramadan-mode': 'on',
+        'sahur-enabled': true,
+        'sahur-minutes-before': 45,
+    });
+    const { service: service28 } = createService({ settings: settings28 });
+    await service28.start();
+    const sahur28 = service28.schedule.getPrayerByName('Sahur');
+    assert(sahur28 !== undefined, 'Sahur vakti eklendi');
+    assertEqual(sahur28.timeString, '04:45', 'Sahur saati = İmsak(05:30) - 45dk = 04:45');
+
+    // Test 29: Hem Sahur hem Teheccüd aktif
+    console.log('\n29. Sahur + Teheccüd Birlikte:');
+    const settings29 = new MockSettings({
+        'ramadan-mode': 'on',
+        'sahur-enabled': true,
+        'sahur-minutes-before': 30,
+        'tahajjud-enabled': true,
+    });
+    const { service: service29 } = createService({ settings: settings29 });
+    await service29.start();
+    assertEqual(service29.schedule.prayers.length, 8, 'Toplam 8 vakit (6 + Sahur + Teheccüd)');
+    const names29 = service29.schedule.prayers.map(p => p.name);
+    assert(names29.indexOf('Teheccüd') < names29.indexOf('Sahur'), 'Teheccüd(03:30) Sahur(05:00) önünde');
+    assert(names29.indexOf('Sahur') < names29.indexOf('İmsak'), 'Sahur(05:00) İmsak(05:30) önünde');
+
+    // Test 30: hijriMonth null olduğunda auto mod
+    console.log('\n30. Hicri Ay Null - Auto Mod:');
+    const nullHijriApi = new MockApiClient();
+    nullHijriApi.setMockData({
+        prayers: {
+            'İmsak': '05:30', 'Güneş': '07:00', 'Öğle': '12:30',
+            'İkindi': '15:45', 'Akşam': '18:15', 'Yatsı': '19:45'
+        },
+        meta: { lastthird: '03:30', hijriMonth: null }
+    });
+    const settings30 = new MockSettings({
+        'ramadan-mode': 'auto',
+        'sahur-enabled': true,
+    });
+    const { service: service30 } = createService({ apiClient: nullHijriApi, settings: settings30 });
+    await service30.start();
+    const sahur30 = service30.schedule.getPrayerByName('Sahur');
+    assertEqual(sahur30, undefined, 'hijriMonth=null ile auto modda Sahur eklenmez');
 
     // Sonuç
     console.log('\n=== Sonuç ===');
