@@ -8,14 +8,14 @@ Prayer times notification and panel display extension for GNOME Shell.
 
 ### Panel Menu
 
-<img src="_img/ss1.png" width="200" height="507" alt="Panel Menu" />
+<img src="_img/en/ss1.png" width="200" height="507" alt="Panel Menu" />
 
 ### Settings
 
 | | |
 |:---:|:---:|
-| <img src="_img/ss2.png" width="380" height="348" alt="Location Settings" /><br>**Location Settings** | <img src="_img/ss3.png" width="380" height="348" alt="Notification Settings" /><br>**Notification Settings** |
-| <img src="_img/ss4.png" width="380" height="348" alt="Extra Prayers" /><br>**Extra Prayers** | <img src="_img/ss5.png" width="380" height="348" alt="Display Settings" /><br>**Display Settings** |
+| <img src="_img/en/ss2.png" width="380" height="348" alt="Location Settings" /><br>**Location Settings** | <img src="_img/en/ss3.png" width="380" height="348" alt="Notification Settings" /><br>**Notification Settings** |
+| <img src="_img/en/ss4.png" width="380" height="348" alt="Extra Prayers" /><br>**Extra Prayers** | <img src="_img/en/ss5.png" width="380" height="348" alt="Display Settings" /><br>**Display Settings** |
 
 ## Features
 

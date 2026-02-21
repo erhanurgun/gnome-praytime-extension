@@ -8,14 +8,14 @@ GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 
 ### Panel Menüsü
 
-<img src="_img/ss1.png" width="200" height="507" alt="Panel Menüsü" />
+<img src="_img/tr/ss1.png" width="200" height="507" alt="Panel Menüsü" />
 
 ### Ayarlar
 
 | | |
 |:---:|:---:|
-| <img src="_img/ss2.png" width="380" height="348" alt="Konum Ayarları" /><br>**Konum Ayarları** | <img src="_img/ss3.png" width="380" height="348" alt="Bildirim Ayarları" /><br>**Bildirim Ayarları** |
-| <img src="_img/ss4.png" width="380" height="348" alt="Ek Vakitler" /><br>**Ek Vakitler** | <img src="_img/ss5.png" width="380" height="348" alt="Görünüm Ayarları" /><br>**Görünüm Ayarları** |
+| <img src="_img/tr/ss2.png" width="380" height="348" alt="Konum Ayarları" /><br>**Konum Ayarları** | <img src="_img/tr/ss3.png" width="380" height="348" alt="Bildirim Ayarları" /><br>**Bildirim Ayarları** |
+| <img src="_img/tr/ss4.png" width="380" height="348" alt="Ek Vakitler" /><br>**Ek Vakitler** | <img src="_img/tr/ss5.png" width="380" height="348" alt="Görünüm Ayarları" /><br>**Görünüm Ayarları** |
 
 ## Özellikler
 
