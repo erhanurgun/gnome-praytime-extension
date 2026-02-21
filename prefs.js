@@ -35,10 +35,18 @@ export default class PraytimePreferences extends ExtensionPreferences {
             this._rebuildForLanguageChange();
         });
 
+        this._locationStatusId = this._settings.connect('changed::location-status', () => {
+            this._updateLocationValidationUI();
+        });
+
         window.connect('destroy', () => {
             if (this._langChangedId) {
                 this._settings.disconnect(this._langChangedId);
                 this._langChangedId = null;
+            }
+            if (this._locationStatusId) {
+                this._settings.disconnect(this._locationStatusId);
+                this._locationStatusId = null;
             }
             this._disconnectAllHandlers();
         });
@@ -123,6 +131,18 @@ export default class PraytimePreferences extends ExtensionPreferences {
     }
 
     _buildLocationPage(page) {
+        // Validasyon uyarı grubu
+        this._validationGroup = new Adw.PreferencesGroup();
+        page.add(this._validationGroup);
+
+        this._validationRow = new Adw.ActionRow({
+            icon_name: 'dialog-warning-symbolic',
+            visible: false,
+        });
+        this._validationRow.add_css_class('error');
+        this._validationGroup.add(this._validationRow);
+        this._validationGroup.visible = false;
+
         // Konum modu grubu
         const modeGroup = new Adw.PreferencesGroup({
             title: _('Konum Yöntemi'),
@@ -141,6 +161,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
             this._settings.set_string('location-mode', mode);
             this._updateLocationVisibility(mode);
         });
+        modeRow.add_suffix(this._createHelpButton(
+            _('Şehir/Ülke: Şehir ve ülke adıyla konum belirler.\nEnlem/Boylam: GPS koordinatlarıyla. Daha hassas sonuç verir.')
+        ));
         modeGroup.add(modeRow);
 
         // Şehir/Ülke grubu
@@ -158,6 +181,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
             this._settings.set_string('country-name', countryRow.text);
             this._updateCityInputVisibility(countryRow.text);
         });
+        countryRow.add_suffix(this._createHelpButton(
+            _('Ülke adını İngilizce girin.\nÖrnekler: Turkey, Germany, France, United Kingdom, Egypt')
+        ));
         this._cityGroup.add(countryRow);
         this._countryRow = countryRow;
 
@@ -191,6 +217,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
         this._connectAndTrack(cityEntryRow, 'changed', () => {
             this._settings.set_string('city-name', cityEntryRow.text);
         });
+        cityEntryRow.add_suffix(this._createHelpButton(
+            _('Şehir adını İngilizce girin.\nÖrnekler: Istanbul, Berlin, Paris, London, Cairo')
+        ));
         this._cityGroup.add(cityEntryRow);
         this._cityEntryRow = cityEntryRow;
 
@@ -218,6 +247,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
             }),
             digits: 4,
         });
+        latRow.add_suffix(this._createHelpButton(
+            _('Enlem değeri -90 ile 90 arasında olmalıdır.\nmaps.google.com adresinden koordinatlarınızı öğrenebilirsiniz.')
+        ));
         this._coordGroup.add(latRow);
         this._settings.bind('latitude', latRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
@@ -231,6 +263,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
             }),
             digits: 4,
         });
+        lngRow.add_suffix(this._createHelpButton(
+            _('Boylam değeri -180 ile 180 arasında olmalıdır.\nmaps.google.com adresinden koordinatlarınızı öğrenebilirsiniz.')
+        ));
         this._coordGroup.add(lngRow);
         this._settings.bind('longitude', lngRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
@@ -263,6 +298,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
                 this._settings.set_int('calculation-method', selected.id);
             }
         });
+        methodRow.add_suffix(this._createHelpButton(
+            _('Bölgenize uygun hesaplama yöntemini seçin.\nTürkiye: Diyanet İşleri Başkanlığı\nAvrupa: MWL veya ISNA\nKörfez: Umm Al-Qura')
+        ));
         methodGroup.add(methodRow);
 
         // Dil ayarı grubu
@@ -291,6 +329,7 @@ export default class PraytimePreferences extends ExtensionPreferences {
         const currentMode = this._settings.get_string('location-mode');
         this._updateLocationVisibility(currentMode);
         this._updateCityInputVisibility(countryRow.text);
+        this._updateLocationValidationUI();
     }
 
     _updateLocationVisibility(mode) {
@@ -303,6 +342,81 @@ export default class PraytimePreferences extends ExtensionPreferences {
         const isTurkey = country.toLowerCase() === 'turkey' || country.toLowerCase() === 'türkiye';
         this._cityDropdownRow.visible = isTurkey;
         this._cityEntryRow.visible = !isTurkey;
+    }
+
+    _createHelpButton(helpText) {
+        const button = new Gtk.Button({
+            icon_name: 'dialog-question-symbolic',
+            valign: Gtk.Align.CENTER,
+            has_frame: false,
+            css_classes: ['flat', 'circular'],
+        });
+
+        const popover = new Gtk.Popover();
+        const label = new Gtk.Label({
+            label: helpText,
+            wrap: true,
+            max_width_chars: 40,
+            margin_top: 8, margin_bottom: 8,
+            margin_start: 8, margin_end: 8,
+        });
+        popover.set_child(label);
+        popover.set_parent(button);
+
+        this._connectAndTrack(button, 'clicked', () => popover.popup());
+        return button;
+    }
+
+    _updateLocationValidationUI() {
+        const status = this._settings.get_string('location-status');
+        const message = this._settings.get_string('location-status-message');
+
+        if (!this._validationRow || !this._validationGroup) return;
+
+        const ERROR_STATUSES = ['invalid_country', 'invalid_city', 'empty_country',
+                                'empty_city', 'api_error'];
+        const isError = ERROR_STATUSES.includes(status);
+        const isWarning = status === 'network_error';
+
+        if (isError) {
+            this._validationGroup.visible = true;
+            this._validationRow.visible = true;
+            this._validationRow.icon_name = 'dialog-error-symbolic';
+            this._validationRow.title = _('Konum doğrulanamadı');
+            this._validationRow.subtitle = message || _('Lütfen konum bilgilerinizi kontrol edin');
+            this._validationRow.remove_css_class('warning');
+            this._validationRow.add_css_class('error');
+        } else if (isWarning) {
+            this._validationGroup.visible = true;
+            this._validationRow.visible = true;
+            this._validationRow.icon_name = 'network-offline-symbolic';
+            this._validationRow.title = _('Bağlantı hatası');
+            this._validationRow.subtitle = message || _('İnternet bağlantınızı kontrol edin');
+            this._validationRow.remove_css_class('error');
+            this._validationRow.add_css_class('warning');
+        } else {
+            this._validationGroup.visible = false;
+            this._validationRow.visible = false;
+        }
+
+        this._applyFieldValidationStyles(status);
+    }
+
+    _applyFieldValidationStyles(status) {
+        if (this._countryRow) {
+            if (['empty_country', 'invalid_country', 'invalid_city'].includes(status)) {
+                this._countryRow.add_css_class('error');
+            } else {
+                this._countryRow.remove_css_class('error');
+            }
+        }
+        if (this._cityEntryRow) {
+            if (['empty_city', 'invalid_city'].includes(status)) {
+                this._cityEntryRow.add_css_class('error');
+            } else {
+                this._cityEntryRow.remove_css_class('error');
+            }
+        }
     }
 
     _buildNotificationPage(page) {
@@ -329,6 +443,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
                 page_increment: 5,
             }),
         });
+        beforeRow.add_suffix(this._createHelpButton(
+            _('Vakit girmeden belirtilen dakika kadar önce ön bildirim gönderilir.')
+        ));
         group.add(beforeRow);
         this._settings.bind('notify-before-minutes', beforeRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
@@ -369,6 +486,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
         this._connectAndTrack(ramadanModeRow, 'notify::selected', () => {
             this._settings.set_string('ramadan-mode', getValueFromIndex(RAMADAN_MODES, ramadanModeRow.selected));
         });
+        ramadanModeRow.add_suffix(this._createHelpButton(
+            _('Otomatik: Hicri takvime göre Ramazan ayını otomatik tespit eder.\nHer Zaman: Yıl boyunca sahur vaktini gösterir.\nKapalı: Sahur vaktini gizler.')
+        ));
         ramadanGroup.add(ramadanModeRow);
 
         const sahurEnabledRow = new Adw.SwitchRow({
@@ -388,6 +508,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
                 page_increment: 15,
             }),
         });
+        sahurMinutesRow.add_suffix(this._createHelpButton(
+            _('İmsak vaktinden belirtilen dakika kadar önce sahur vakti başlar.')
+        ));
         ramadanGroup.add(sahurMinutesRow);
         this._settings.bind('sahur-minutes-before', sahurMinutesRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
@@ -414,6 +537,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
                 page_increment: 15,
             }),
         });
+        tahajjudOffsetRow.add_suffix(this._createHelpButton(
+            _('Gecenin son üçte birinden belirtilen dakika kadar kaydırır.\nNegatif: daha erken, Pozitif: daha geç.')
+        ));
         tahajjudGroup.add(tahajjudOffsetRow);
         this._settings.bind('tahajjud-offset-minutes', tahajjudOffsetRow, 'value', Gio.SettingsBindFlags.DEFAULT);
     }
@@ -490,6 +616,9 @@ export default class PraytimePreferences extends ExtensionPreferences {
                 page_increment: 15,
             }),
         });
+        thresholdRow.add_suffix(this._createHelpButton(
+            _('Sonraki vakte bu kadar dakika veya daha az kaldığında panelde geri sayım başlar.')
+        ));
         countdownGroup.add(thresholdRow);
         this._settings.bind('countdown-threshold-minutes', thresholdRow, 'value', Gio.SettingsBindFlags.DEFAULT);
 
