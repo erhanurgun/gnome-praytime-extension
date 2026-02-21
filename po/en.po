@@ -5,7 +5,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: praytime@erho.dev 0.9.0\n"
+"Project-Id-Version: praytime@erho.dev 0.9.1\n"
 "Report-Msgid-Bugs-To: https://github.com/erhanurgun/LINUX-ubuntu-gnome-"
 "praytime-extension/issues\n"
 "POT-Creation-Date: 2026-02-21 21:28+0300\n"
@@ -422,3 +422,79 @@ msgstr "Tahajjud"
 #: src/application/PrayerTimeService.js:234
 msgid "Sahur"
 msgstr "Suhur"
+
+#: src/application/PrayerTimeService.js
+msgid "Geçersiz konum bilgisi"
+msgstr "Invalid location data"
+
+#: src/application/PrayerTimeService.js
+msgid "Ülke adı girilmedi"
+msgstr "Country name is empty"
+
+#: src/application/PrayerTimeService.js
+msgid "Şehir adı girilmedi"
+msgstr "City name is empty"
+
+#: src/application/PrayerTimeService.js
+msgid "Girilen şehir veya ülke bulunamadı"
+msgstr "City or country not found"
+
+#: src/application/PrayerTimeService.js
+msgid "Ağ bağlantısı hatası"
+msgstr "Network connection error"
+
+#: prefs.js
+msgid "Konum doğrulanamadı"
+msgstr "Location could not be verified"
+
+#: prefs.js
+msgid "Lütfen konum bilgilerinizi kontrol edin"
+msgstr "Please check your location settings"
+
+#: prefs.js
+msgid "İnternet bağlantınızı kontrol edin"
+msgstr "Please check your internet connection"
+
+#: prefs.js
+msgid "Şehir/Ülke: Şehir ve ülke adıyla konum belirler.\nEnlem/Boylam: GPS koordinatlarıyla. Daha hassas sonuç verir."
+msgstr "City/Country: Set location by city and country name.\nLatitude/Longitude: By GPS coordinates. More precise results."
+
+#: prefs.js
+msgid "Ülke adını İngilizce girin.\nÖrnekler: Turkey, Germany, France, United Kingdom, Egypt"
+msgstr "Enter country name in English.\nExamples: Turkey, Germany, France, United Kingdom, Egypt"
+
+#: prefs.js
+msgid "Şehir adını İngilizce girin.\nÖrnekler: Istanbul, Berlin, Paris, London, Cairo"
+msgstr "Enter city name in English.\nExamples: Istanbul, Berlin, Paris, London, Cairo"
+
+#: prefs.js
+msgid "Enlem değeri -90 ile 90 arasında olmalıdır.\nmaps.google.com adresinden koordinatlarınızı öğrenebilirsiniz."
+msgstr "Latitude must be between -90 and 90.\nYou can find your coordinates at maps.google.com."
+
+#: prefs.js
+msgid "Boylam değeri -180 ile 180 arasında olmalıdır.\nmaps.google.com adresinden koordinatlarınızı öğrenebilirsiniz."
+msgstr "Longitude must be between -180 and 180.\nYou can find your coordinates at maps.google.com."
+
+#: prefs.js
+msgid "Bölgenize uygun hesaplama yöntemini seçin.\nTürkiye: Diyanet İşleri Başkanlığı\nAvrupa: MWL veya ISNA\nKörfez: Umm Al-Qura"
+msgstr "Select the calculation method for your region.\nTurkey: Diyanet (Religious Authority)\nEurope: MWL or ISNA\nGulf: Umm Al-Qura"
+
+#: prefs.js
+msgid "Vakit girmeden belirtilen dakika kadar önce ön bildirim gönderilir."
+msgstr "A pre-notification will be sent the specified minutes before prayer time."
+
+#: prefs.js
+msgid "Otomatik: Hicri takvime göre Ramazan ayını otomatik tespit eder.\nHer Zaman: Yıl boyunca sahur vaktini gösterir.\nKapalı: Sahur vaktini gizler."
+msgstr "Automatic: Detects Ramadan automatically from Hijri calendar.\nAlways: Shows Suhur time all year.\nOff: Hides Suhur time."
+
+#: prefs.js
+msgid "İmsak vaktinden belirtilen dakika kadar önce sahur vakti başlar."
+msgstr "Suhur time starts the specified minutes before Imsak."
+
+#: prefs.js
+msgid "Gecenin son üçte birinden belirtilen dakika kadar kaydırır.\nNegatif: daha erken, Pozitif: daha geç."
+msgstr "Shifts from the last third of the night by the specified minutes.\nNegative: earlier, Positive: later."
+
+#: prefs.js
+msgid "Sonraki vakte bu kadar dakika veya daha az kaldığında panelde geri sayım başlar."
+msgstr "Countdown starts in the panel when this many minutes or less remain until the next prayer."

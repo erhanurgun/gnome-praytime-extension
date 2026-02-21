@@ -124,6 +124,46 @@ const TRANSLATIONS = {
 
         // Prefs - Geliştirici
         'Geliştirici hakkında': 'About the developer',
+
+        // Konum validasyon mesajları
+        'Geçersiz konum bilgisi': 'Invalid location data',
+        'Ülke adı girilmedi': 'Country name is empty',
+        'Şehir adı girilmedi': 'City name is empty',
+        'Girilen şehir veya ülke bulunamadı': 'City or country not found',
+        'Ağ bağlantısı hatası': 'Network connection error',
+        'Konum doğrulanamadı': 'Location could not be verified',
+        'Lütfen konum bilgilerinizi kontrol edin': 'Please check your location settings',
+        'İnternet bağlantınızı kontrol edin': 'Please check your internet connection',
+
+        // Tooltip metinleri - Konum sayfası
+        'Şehir/Ülke: Şehir ve ülke adıyla konum belirler.\nEnlem/Boylam: GPS koordinatlarıyla. Daha hassas sonuç verir.':
+            'City/Country: Set location by city and country name.\nLatitude/Longitude: By GPS coordinates. More precise results.',
+        'Ülke adını İngilizce girin.\nÖrnekler: Turkey, Germany, France, United Kingdom, Egypt':
+            'Enter country name in English.\nExamples: Turkey, Germany, France, United Kingdom, Egypt',
+        'Şehir adını İngilizce girin.\nÖrnekler: Istanbul, Berlin, Paris, London, Cairo':
+            'Enter city name in English.\nExamples: Istanbul, Berlin, Paris, London, Cairo',
+        'Enlem değeri -90 ile 90 arasında olmalıdır.\nmaps.google.com adresinden koordinatlarınızı öğrenebilirsiniz.':
+            'Latitude must be between -90 and 90.\nYou can find your coordinates at maps.google.com.',
+        'Boylam değeri -180 ile 180 arasında olmalıdır.\nmaps.google.com adresinden koordinatlarınızı öğrenebilirsiniz.':
+            'Longitude must be between -180 and 180.\nYou can find your coordinates at maps.google.com.',
+        'Bölgenize uygun hesaplama yöntemini seçin.\nTürkiye: Diyanet İşleri Başkanlığı\nAvrupa: MWL veya ISNA\nKörfez: Umm Al-Qura':
+            'Select the calculation method for your region.\nTurkey: Diyanet (Religious Authority)\nEurope: MWL or ISNA\nGulf: Umm Al-Qura',
+
+        // Tooltip metinleri - Bildirimler
+        'Vakit girmeden belirtilen dakika kadar önce ön bildirim gönderilir.':
+            'A pre-notification will be sent the specified minutes before prayer time.',
+
+        // Tooltip metinleri - Ek Vakitler
+        'Otomatik: Hicri takvime göre Ramazan ayını otomatik tespit eder.\nHer Zaman: Yıl boyunca sahur vaktini gösterir.\nKapalı: Sahur vaktini gizler.':
+            'Automatic: Detects Ramadan automatically from Hijri calendar.\nAlways: Shows Suhur time all year.\nOff: Hides Suhur time.',
+        'İmsak vaktinden belirtilen dakika kadar önce sahur vakti başlar.':
+            'Suhur time starts the specified minutes before Imsak.',
+        'Gecenin son üçte birinden belirtilen dakika kadar kaydırır.\nNegatif: daha erken, Pozitif: daha geç.':
+            'Shifts from the last third of the night by the specified minutes.\nNegative: earlier, Positive: later.',
+
+        // Tooltip metinleri - Görünüm
+        'Sonraki vakte bu kadar dakika veya daha az kaldığında panelde geri sayım başlar.':
+            'Countdown starts in the panel when this many minutes or less remain until the next prayer.',
     },
 };
 
