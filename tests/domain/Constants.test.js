@@ -2,8 +2,8 @@
 // TURKEY_CITIES, PRAYER_NAMES, CALCULATION_METHODS, LOCATION_MODES, ERROR_CODES ve yardımcı fonksiyonlar
 
 // Constants'tan kopyalanan değerler (test için bağımsız)
-const APP_VERSION = '0.9.0';
-const APP_VERSION_CODE = 22;
+const APP_VERSION = '0.9.1';
+const APP_VERSION_CODE = 23;
 const APP_NAME = 'praytime@erho.dev';
 const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 const APP_DEVELOPER = '@erhanurgun';
@@ -59,6 +59,17 @@ const CALCULATION_METHODS = [
 
 const ERROR_CODES = {
     INVALID_LOCATION: 'INVALID_LOCATION',
+};
+
+const LOCATION_STATUS = {
+    UNKNOWN: 'unknown',
+    VALID: 'valid',
+    INVALID_COUNTRY: 'invalid_country',
+    INVALID_CITY: 'invalid_city',
+    EMPTY_COUNTRY: 'empty_country',
+    EMPTY_CITY: 'empty_city',
+    NETWORK_ERROR: 'network_error',
+    API_ERROR: 'api_error',
 };
 
 const TURKEY_CITIES = [
@@ -221,10 +232,10 @@ console.log('\n=== Constants Testleri ===\n');
 
 // Test 1: Versiyon sabitleri
 console.log('1. Versiyon Sabitleri:');
-assertEqual(APP_VERSION, '0.9.0', 'APP_VERSION doğru');
-assertEqual(APP_VERSION_CODE, 22, 'APP_VERSION_CODE doğru');
+assertEqual(APP_VERSION, '0.9.1', 'APP_VERSION doğru');
+assertEqual(APP_VERSION_CODE, 23, 'APP_VERSION_CODE doğru');
 assertEqual(APP_NAME, 'praytime@erho.dev', 'APP_NAME doğru');
-assertEqual(APP_USER_AGENT, 'praytime@erho.dev/0.9.0', 'APP_USER_AGENT doğru format');
+assertEqual(APP_USER_AGENT, 'praytime@erho.dev/0.9.1', 'APP_USER_AGENT doğru format');
 assertEqual(APP_DEVELOPER, '@erhanurgun', 'APP_DEVELOPER doğru');
 assertEqual(APP_WEBSITE, 'https://erho.me', 'APP_WEBSITE doğru');
 
@@ -343,6 +354,18 @@ assertEqual(LOCATION_MODES.labels.length, 2, '2 etiket');
 // Test 14: ERROR_CODES
 console.log('\n14. ERROR_CODES Testleri:');
 assertEqual(ERROR_CODES.INVALID_LOCATION, 'INVALID_LOCATION', 'INVALID_LOCATION sabiti doğru');
+
+// Test 14b: LOCATION_STATUS
+console.log('\n14b. LOCATION_STATUS Testleri:');
+assertEqual(LOCATION_STATUS.UNKNOWN, 'unknown', 'UNKNOWN sabiti doğru');
+assertEqual(LOCATION_STATUS.VALID, 'valid', 'VALID sabiti doğru');
+assertEqual(LOCATION_STATUS.INVALID_COUNTRY, 'invalid_country', 'INVALID_COUNTRY sabiti doğru');
+assertEqual(LOCATION_STATUS.INVALID_CITY, 'invalid_city', 'INVALID_CITY sabiti doğru');
+assertEqual(LOCATION_STATUS.EMPTY_COUNTRY, 'empty_country', 'EMPTY_COUNTRY sabiti doğru');
+assertEqual(LOCATION_STATUS.EMPTY_CITY, 'empty_city', 'EMPTY_CITY sabiti doğru');
+assertEqual(LOCATION_STATUS.NETWORK_ERROR, 'network_error', 'NETWORK_ERROR sabiti doğru');
+assertEqual(LOCATION_STATUS.API_ERROR, 'api_error', 'API_ERROR sabiti doğru');
+assertEqual(Object.keys(LOCATION_STATUS).length, 8, 'LOCATION_STATUS 8 durum içerir');
 
 // Test 15: getIndexFromValue ve getValueFromIndex
 console.log('\n15. Index/Value Dönüşüm Testleri:');
