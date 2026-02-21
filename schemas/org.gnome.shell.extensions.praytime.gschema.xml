@@ -80,9 +80,50 @@
     </key>
 
     <key name="panel-position" type="s">
-      <default>'right'</default>
+      <default>'left'</default>
       <summary>Panel konumu</summary>
       <description>Extension panelde nerede gösterilecek (left, center, right)</description>
+    </key>
+
+    <!-- Dil Ayarları -->
+    <key name="language" type="s">
+      <default>'tr'</default>
+      <summary>Display language</summary>
+      <description>UI language: tr (Turkish), en (English)</description>
+    </key>
+
+    <!-- Konum Modu ve Uluslararası Konum Ayarları -->
+    <key name="location-mode" type="s">
+      <default>'city'</default>
+      <summary>Location mode</summary>
+      <description>Location selection mode: city (city/country name) or coordinates (latitude/longitude)</description>
+    </key>
+
+    <key name="country-name" type="s">
+      <default>'Turkey'</default>
+      <summary>Country name</summary>
+      <description>Country name for prayer time calculation</description>
+    </key>
+
+    <key name="latitude" type="d">
+      <default>39.9334</default>
+      <summary>Latitude</summary>
+      <description>Latitude for coordinate-based prayer time calculation</description>
+      <range min="-90.0" max="90.0"/>
+    </key>
+
+    <key name="longitude" type="d">
+      <default>32.8597</default>
+      <summary>Longitude</summary>
+      <description>Longitude for coordinate-based prayer time calculation</description>
+      <range min="-180.0" max="180.0"/>
+    </key>
+
+    <key name="calculation-method" type="i">
+      <default>13</default>
+      <summary>Calculation method</summary>
+      <description>Prayer time calculation method (Aladhan API method ID)</description>
+      <range min="0" max="99"/>
     </key>
 
     <!-- Ramazan ve Ek Vakit Ayarları -->
@@ -93,7 +134,7 @@
     </key>
 
     <key name="sahur-enabled" type="b">
-      <default>true</default>
+      <default>false</default>
       <summary>Sahur bildirimi</summary>
       <description>Ramazan'da sahur vaktini göster ve bildirim gönder</description>
     </key>
