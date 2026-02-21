@@ -1,6 +1,6 @@
 import { PrayerSchedule } from '../domain/models/PrayerSchedule.js';
 import { PrayerTime } from '../domain/models/PrayerTime.js';
-import { ERROR_CODES } from '../config/constants.js';
+import { ERROR_CODES, LOCATION_STATUS } from '../config/constants.js';
 
 let _ = (s) => s;
 
@@ -117,13 +117,29 @@ export class PrayerTimeService {
         this._refreshInFlight = true;
 
         try {
-            this._location = this._locationProvider.getLocation();
-
-            if (!this._location?.isValid()) {
+            // LocationProvider boş alanları varsayılana düşürür,
+            // bu yüzden GSettings'ten doğrudan kontrol gerekli
+            const preStatus = this._preValidateLocation();
+            if (preStatus) {
+                this._writeLocationStatus(preStatus.code, preStatus.message);
                 throw new Error(ERROR_CODES.INVALID_LOCATION);
             }
 
-            const apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
+            this._location = this._locationProvider.getLocation();
+
+            if (!this._location?.isValid()) {
+                this._writeLocationStatus(LOCATION_STATUS.API_ERROR, _('Geçersiz konum bilgisi'));
+                throw new Error(ERROR_CODES.INVALID_LOCATION);
+            }
+
+            let apiResponse;
+            try {
+                apiResponse = await this._apiClient.fetchPrayerTimes(this._location);
+            } catch (apiError) {
+                const status = this._classifyApiError(apiError);
+                this._writeLocationStatus(status.code, status.message);
+                throw apiError;
+            }
             if (!this._isRunning) return;
 
             this._lastApiResponse = apiResponse;
@@ -135,6 +151,7 @@ export class PrayerTimeService {
                 (title, body) => this._onNotification?.(title, body)
             );
 
+            this._writeLocationStatus(LOCATION_STATUS.VALID, '');
             this._triggerUpdate();
             console.log(`[Praytime] Prayer times updated: ${this._location.toString()}`);
         } finally {
@@ -247,6 +264,39 @@ export class PrayerTimeService {
 
     _triggerUpdate() {
         this._onUpdate?.();
+    }
+
+    _writeLocationStatus(code, message) {
+        if (!this._settings) return;
+        try {
+            this._settings.set_string('location-status', code);
+            this._settings.set_string('location-status-message', message || '');
+        } catch (e) {
+            console.error(`[Praytime] Failed to write location status: ${e.message}`);
+        }
+    }
+
+    _preValidateLocation() {
+        if (!this._settings) return null;
+        const mode = this._settings.get_string('location-mode');
+        if (mode === 'city') {
+            const country = this._settings.get_string('country-name');
+            const city = this._settings.get_string('city-name');
+            if (!country?.trim())
+                return { code: LOCATION_STATUS.EMPTY_COUNTRY, message: _('Ülke adı girilmedi') };
+            if (!city?.trim())
+                return { code: LOCATION_STATUS.EMPTY_CITY, message: _('Şehir adı girilmedi') };
+        }
+        return null;
+    }
+
+    _classifyApiError(error) {
+        const msg = error.message || '';
+        if (msg.includes('400') || msg.includes('404') || msg.includes('Invalid API'))
+            return { code: LOCATION_STATUS.INVALID_CITY, message: _('Girilen şehir veya ülke bulunamadı') };
+        if (msg.includes('Network') || msg.includes('resolve') || msg.includes('Cancelled'))
+            return { code: LOCATION_STATUS.NETWORK_ERROR, message: _('Ağ bağlantısı hatası') };
+        return { code: LOCATION_STATUS.API_ERROR, message: msg };
     }
 
     destroy() {
