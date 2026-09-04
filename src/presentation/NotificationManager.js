@@ -18,6 +18,7 @@ export class NotificationManager {
         this._settings = settings;
         this._extensionPath = extensionPath;
         this._source = null;
+        this._sourceDestroyId = null;
         this._soundPlayer = null;
     }
 
@@ -57,9 +58,8 @@ export class NotificationManager {
                 return;
             }
 
-            // Dosya yolunu tırnak içine al (boşluk içeren yollar için)
-            const command = `${player} "${soundPath}"`;
-            GLib.spawn_command_line_async(command);
+            // Argümanlar dizi olarak verilir, shell quoting'e gerek kalmaz
+            Gio.Subprocess.new([player, soundPath], Gio.SubprocessFlags.NONE);
             console.log(`[Praytime] Notification sound played: ${player} -> ${soundPath}`);
         } catch (error) {
             console.log(`[Praytime] Sound playback error: ${error.message}`);
@@ -72,10 +72,9 @@ export class NotificationManager {
             return this._soundPlayer;
         }
 
-        // Mevcut ses çalarları kontrol et
+        // PATH üzerinde ara: alt süreç açmaz, ana döngüyü bloklamaz
         for (const player of SOUND_PLAYERS) {
-            const [success] = GLib.spawn_command_line_sync(`which ${player}`);
-            if (success) {
+            if (GLib.find_program_in_path(player)) {
                 this._soundPlayer = player;
                 console.log(`[Praytime] Sound player found: ${player}`);
                 return player;
@@ -108,11 +107,17 @@ export class NotificationManager {
     }
 
     _ensureSource() {
-        if (this._source && !this._source.destroying) return;
+        if (this._source) return;
 
         this._source = new MessageTray.Source({
             title: 'Praytime',
             iconName: 'preferences-system-time-symbolic',
+        });
+
+        // Shell kaynağı kendi başına yıkabilir, referans bayat kalmamalı
+        this._sourceDestroyId = this._source.connect('destroy', () => {
+            this._source = null;
+            this._sourceDestroyId = null;
         });
 
         Main.messageTray.add(this._source);
@@ -120,6 +125,10 @@ export class NotificationManager {
 
     destroy() {
         if (this._source) {
+            if (this._sourceDestroyId) {
+                this._source.disconnect(this._sourceDestroyId);
+                this._sourceDestroyId = null;
+            }
             this._source.destroy();
             this._source = null;
         }

@@ -1,5 +1,14 @@
 /* Praytime Extension Stilleri */
 
+/*
+ * Accent renk stratejisi:
+ * GNOME 47 ile St'ye -st-accent-color ve -st-accent-fg-color eklendi.
+ * GNOME 46 bu degerleri cozemez ve CSS kurali ilgili satiri atlar, kuralin
+ * tamamini degil. Bu yuzden once sabit Ubuntu turuncusu, hemen ardindan
+ * accent satiri yaziliyor: 47+ accent'i kullanir, 46 sabit renge duser.
+ * Alfa kanalli kurallar accent ile ifade edilemedigi icin sabit birakildi.
+ */
+
 /* Panel */
 .praytime-panel-box {
     spacing: 6px;
@@ -68,13 +77,16 @@
 
 .praytime-timeline-dot-current {
     background-color: #E95420;
+    background-color: -st-accent-color;
     box-shadow: 0 0 6px rgba(233, 84, 32, 0.6);
 }
 
 .praytime-timeline-dot-next {
     background-color: #E95420;
+    background-color: -st-accent-color;
     opacity: 0.6;
     border: 2px solid #E95420;
+    border: 2px solid -st-accent-color;
 }
 
 .praytime-timeline-line {
@@ -107,6 +119,7 @@
 .praytime-timeline-name-current {
     font-weight: bold;
     color: #E95420;
+    color: -st-accent-color;
 }
 
 .praytime-timeline-name-next {
@@ -127,6 +140,7 @@
 .praytime-timeline-time-current {
     font-weight: bold;
     color: #E95420;
+    color: -st-accent-color;
 }
 
 .praytime-timeline-badge {
@@ -144,13 +158,16 @@
 
 .praytime-timeline-badge-current {
     background-color: #E95420;
+    background-color: -st-accent-color;
     color: white;
+    color: -st-accent-fg-color;
     font-weight: bold;
 }
 
 .praytime-timeline-badge-next {
     background-color: rgba(233, 84, 32, 0.2);
     color: #E95420;
+    color: -st-accent-color;
     font-weight: 600;
 }
 
@@ -160,7 +177,10 @@
     padding: 0 !important;
 }
 
-/* PopupBaseMenuItem hover'ını etkisizleştir */
+/* PopupBaseMenuItem vurgusunu etkisizleştir.
+   GNOME 47 ile setActive() artık "selected" style class yerine
+   :selected pseudo-class uyguluyor; .active geriye dönük uyumluluk için kalır. */
+.praytime-action-row:selected,
 .praytime-action-row:hover,
 .praytime-action-row:focus,
 .praytime-action-row:active,
@@ -211,6 +231,7 @@
 .praytime-active {
     font-weight: bold;
     color: #E95420;
+    color: -st-accent-color;
 }
 
 .praytime-next {

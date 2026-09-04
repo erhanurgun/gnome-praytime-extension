@@ -2,8 +2,8 @@
 // TURKEY_CITIES, PRAYER_NAMES, CALCULATION_METHODS, LOCATION_MODES, ERROR_CODES ve yardımcı fonksiyonlar
 
 // Constants'tan kopyalanan değerler (test için bağımsız)
-const APP_VERSION = '0.9.2';
-const APP_VERSION_CODE = 24;
+const APP_VERSION = '0.10.0';
+const APP_VERSION_CODE = 25;
 const APP_NAME = 'praytime@erho.dev';
 const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 const APP_DEVELOPER = '@erhanurgun';
@@ -12,7 +12,7 @@ const APP_WEBSITE = 'https://erho.me';
 const N_ = (s) => s;
 
 const PRAYER_NAMES = [
-    { id: 'imsak',   name: N_('İmsak'),   nameEn: 'Imsak',   apiKey: 'Imsak' },
+    { id: 'imsak',   name: N_('İmsak'),   nameEn: 'Imsak',   apiKey: 'Fajr' },
     { id: 'gunes',   name: N_('Güneş'),   nameEn: 'Sunrise',  apiKey: 'Sunrise' },
     { id: 'ogle',    name: N_('Öğle'),    nameEn: 'Dhuhr',    apiKey: 'Dhuhr' },
     { id: 'ikindi',  name: N_('İkindi'),  nameEn: 'Asr',      apiKey: 'Asr' },
@@ -232,10 +232,10 @@ console.log('\n=== Constants Testleri ===\n');
 
 // Test 1: Versiyon sabitleri
 console.log('1. Versiyon Sabitleri:');
-assertEqual(APP_VERSION, '0.9.2', 'APP_VERSION doğru');
-assertEqual(APP_VERSION_CODE, 24, 'APP_VERSION_CODE doğru');
+assertEqual(APP_VERSION, '0.10.0', 'APP_VERSION doğru');
+assertEqual(APP_VERSION_CODE, 25, 'APP_VERSION_CODE doğru');
 assertEqual(APP_NAME, 'praytime@erho.dev', 'APP_NAME doğru');
-assertEqual(APP_USER_AGENT, 'praytime@erho.dev/0.9.2', 'APP_USER_AGENT doğru format');
+assertEqual(APP_USER_AGENT, 'praytime@erho.dev/0.10.0', 'APP_USER_AGENT doğru format');
 assertEqual(APP_DEVELOPER, '@erhanurgun', 'APP_DEVELOPER doğru');
 assertEqual(APP_WEBSITE, 'https://erho.me', 'APP_WEBSITE doğru');
 
@@ -298,7 +298,7 @@ console.log('\n9. PRAYER_NAMES - ID Alanı Testleri:');
 assertEqual(PRAYER_NAMES.length, 6, '6 namaz vakti tanımlı');
 assertEqual(PRAYER_NAMES[0].id, 'imsak', 'İlk vakit id\'si imsak');
 assertEqual(PRAYER_NAMES[0].name, 'İmsak', 'İlk vakit adı İmsak');
-assertEqual(PRAYER_NAMES[0].apiKey, 'Imsak', 'İlk vakit apiKey\'i Imsak');
+assertEqual(PRAYER_NAMES[0].apiKey, 'Fajr', 'İlk vakit apiKey\'i Fajr');
 assertEqual(PRAYER_NAMES[5].id, 'yatsi', 'Son vakit id\'si yatsi');
 
 // id'lerin benzersizliği
@@ -310,7 +310,7 @@ assertEqual(prayerIds.length, uniquePrayerIds.size, 'Tüm namaz vakti id\'leri b
 console.log('\n10. getPrayerById Testleri:');
 const imsak = getPrayerById('imsak');
 assertEqual(imsak.name, 'İmsak', 'getPrayerById imsak doğru');
-assertEqual(imsak.apiKey, 'Imsak', 'getPrayerById apiKey doğru');
+assertEqual(imsak.apiKey, 'Fajr', 'getPrayerById apiKey doğru');
 
 const ogle = getPrayerById('ogle');
 assertEqual(ogle.name, 'Öğle', 'getPrayerById ogle doğru');
@@ -321,7 +321,7 @@ assertEqual(notFound, null, 'Bilinmeyen id null döner');
 // Test 11: getPrayerApiKeyMap fonksiyonu
 console.log('\n11. getPrayerApiKeyMap Testleri:');
 const apiKeyMap = getPrayerApiKeyMap();
-assertEqual(apiKeyMap['imsak'], 'Imsak', 'API key map imsak -> Imsak');
+assertEqual(apiKeyMap['imsak'], 'Fajr', 'API key map imsak -> Fajr');
 assertEqual(apiKeyMap['gunes'], 'Sunrise', 'API key map gunes -> Sunrise');
 assertEqual(apiKeyMap['ogle'], 'Dhuhr', 'API key map ogle -> Dhuhr');
 assertEqual(apiKeyMap['ikindi'], 'Asr', 'API key map ikindi -> Asr');

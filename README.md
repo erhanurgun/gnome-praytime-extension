@@ -1,6 +1,6 @@
 # Praytime - GNOME Shell Extension
 
-![Version](https://img.shields.io/badge/version-0.9.2-blue)
+![Version](https://img.shields.io/badge/version-0.10.0-blue)
 
 > [English documentation](README.en.md)
 
@@ -33,7 +33,7 @@ GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 
 ## Gereksinimler
 
-- GNOME Shell 46, 47 veya 48
+- GNOME Shell 46 - 51 (Ubuntu 24.04 LTS ve üzeri)
 - İnternet bağlantısı (API erişimi için)
 
 ## Hızlı Başlangıç

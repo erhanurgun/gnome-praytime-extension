@@ -17,7 +17,7 @@ class PrayerSchedule {
         }
 
         const PRAYER_NAMES = [
-            { name: 'İmsak', nameEn: 'Imsak', apiKey: 'Imsak' },
+            { name: 'İmsak', nameEn: 'Imsak', apiKey: 'Fajr' },
             { name: 'Güneş', nameEn: 'Sunrise', apiKey: 'Sunrise' },
             { name: 'Öğle', nameEn: 'Dhuhr', apiKey: 'Dhuhr' },
             { name: 'İkindi', nameEn: 'Asr', apiKey: 'Asr' },

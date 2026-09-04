@@ -1,8 +1,8 @@
 // Uygulama sabitleri - DRY prensibi için merkezi tanımlama
 
 // Merkezi versiyon bilgisi
-export const APP_VERSION = '0.9.2';
-export const APP_VERSION_CODE = 24;
+export const APP_VERSION = '0.10.0';
+export const APP_VERSION_CODE = 25;
 export const APP_NAME = 'praytime@erho.dev';
 export const APP_USER_AGENT = `${APP_NAME}/${APP_VERSION}`;
 export const APP_DEVELOPER = '@erhanurgun';
@@ -15,7 +15,7 @@ const N_ = (s) => s;
 
 // Namaz vakitleri - id sabit tanımlayıcı, name çevrilecek display adı, apiKey API eşleme
 export const PRAYER_NAMES = [
-    { id: 'imsak',   name: N_('İmsak'),   nameEn: 'Imsak',   apiKey: 'Imsak' },
+    { id: 'imsak',   name: N_('İmsak'),   nameEn: 'Imsak',   apiKey: 'Fajr' },
     { id: 'gunes',   name: N_('Güneş'),   nameEn: 'Sunrise',  apiKey: 'Sunrise' },
     { id: 'ogle',    name: N_('Öğle'),    nameEn: 'Dhuhr',    apiKey: 'Dhuhr' },
     { id: 'ikindi',  name: N_('İkindi'),  nameEn: 'Asr',      apiKey: 'Asr' },

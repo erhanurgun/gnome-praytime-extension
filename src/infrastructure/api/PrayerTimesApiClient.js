@@ -1,4 +1,4 @@
-import Soup from 'gi://Soup';
+import Soup from 'gi://Soup?version=3.0';
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import { API_BASE_URL, PRAYER_NAMES, APP_USER_AGENT } from '../../config/constants.js';
@@ -113,7 +113,10 @@ export class PrayerTimesApiClient {
             this._cancellable.cancel();
             this._cancellable = null;
         }
-        this._session = null;
+        if (this._session) {
+            this._session.abort();
+            this._session = null;
+        }
         this._settings = null;
     }
 }
