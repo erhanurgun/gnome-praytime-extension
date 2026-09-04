@@ -33,7 +33,7 @@ GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi extension'ı.
 
 ## Gereksinimler
 
-- GNOME Shell 46, 47, 48, 49 veya 50 (Ubuntu 24.04 LTS - 26.04 LTS)
+- GNOME Shell 46 - 51 (Ubuntu 24.04 LTS ve üzeri)
 - İnternet bağlantısı (API erişimi için)
 
 ## Hızlı Başlangıç

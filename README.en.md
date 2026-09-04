@@ -33,7 +33,7 @@ Prayer times notification and panel display extension for GNOME Shell.
 
 ## Requirements
 
-- GNOME Shell 46, 47, 48, 49, or 50 (Ubuntu 24.04 LTS - 26.04 LTS)
+- GNOME Shell 46 - 51 (Ubuntu 24.04 LTS and newer)
 - Internet connection (for API access)
 
 ## Quick Start
