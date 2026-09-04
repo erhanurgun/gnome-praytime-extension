@@ -1,6 +1,6 @@
 #!/bin/bash
 #══════════════════════════════════════════════════════════════════════════════
-#  Praytime Test Runner v0.9.2
+#  Praytime Test Runner v0.10.0
 #  Gelişmiş test çalıştırıcı - renkli çıktı, paralel mod, watch desteği
 #══════════════════════════════════════════════════════════════════════════════
 
@@ -57,7 +57,7 @@ APP_TESTS=("TimerManager" "NotificationScheduler" "PrayerTimeService")
 print_header() {
     echo ""
     echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║${NC}  ${WHITE}${BOLD}Praytime Test Runner${NC}  ${DIM}v0.9.2${NC}                              ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  ${WHITE}${BOLD}Praytime Test Runner${NC}  ${DIM}v0.10.0${NC}                             ${BLUE}║${NC}"
     echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
 }
 
