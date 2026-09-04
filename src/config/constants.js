@@ -15,7 +15,7 @@ const N_ = (s) => s;
 
 // Namaz vakitleri - id sabit tanımlayıcı, name çevrilecek display adı, apiKey API eşleme
 export const PRAYER_NAMES = [
-    { id: 'imsak',   name: N_('İmsak'),   nameEn: 'Imsak',   apiKey: 'Imsak' },
+    { id: 'imsak',   name: N_('İmsak'),   nameEn: 'Imsak',   apiKey: 'Fajr' },
     { id: 'gunes',   name: N_('Güneş'),   nameEn: 'Sunrise',  apiKey: 'Sunrise' },
     { id: 'ogle',    name: N_('Öğle'),    nameEn: 'Dhuhr',    apiKey: 'Dhuhr' },
     { id: 'ikindi',  name: N_('İkindi'),  nameEn: 'Asr',      apiKey: 'Asr' },

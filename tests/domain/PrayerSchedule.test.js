@@ -32,7 +32,7 @@ class PrayerTime {
 
 // PRAYER_NAMES sabiti (test için) - id bazlı
 const PRAYER_NAMES = [
-    { id: 'imsak',   name: 'İmsak',   nameEn: 'Imsak',   apiKey: 'Imsak' },
+    { id: 'imsak',   name: 'İmsak',   nameEn: 'Imsak',   apiKey: 'Fajr' },
     { id: 'gunes',   name: 'Güneş',   nameEn: 'Sunrise',  apiKey: 'Sunrise' },
     { id: 'ogle',    name: 'Öğle',    nameEn: 'Dhuhr',    apiKey: 'Dhuhr' },
     { id: 'ikindi',  name: 'İkindi',  nameEn: 'Asr',      apiKey: 'Asr' },
