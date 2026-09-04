@@ -2,7 +2,7 @@
   "uuid": "praytime@erho.dev",
   "name": "Praytime",
   "description": "GNOME Shell için namaz vakitleri bildirimi ve panel gösterimi",
-  "shell-version": ["46", "47", "48", "49", "50"],
+  "shell-version": ["46", "47", "48", "49", "50", "51"],
   "version": 25,
   "version-name": "0.10.0",
   "url": "https://github.com/erhanurgun/gnome-praytime-extension",
