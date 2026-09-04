@@ -160,7 +160,10 @@
     padding: 0 !important;
 }
 
-/* PopupBaseMenuItem hover'ını etkisizleştir */
+/* PopupBaseMenuItem vurgusunu etkisizleştir.
+   GNOME 47 ile setActive() artık "selected" style class yerine
+   :selected pseudo-class uyguluyor; .active geriye dönük uyumluluk için kalır. */
+.praytime-action-row:selected,
 .praytime-action-row:hover,
 .praytime-action-row:focus,
 .praytime-action-row:active,
