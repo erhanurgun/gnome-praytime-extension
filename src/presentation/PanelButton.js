@@ -1,5 +1,4 @@
 import GObject from 'gi://GObject';
-import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
@@ -201,7 +200,7 @@ class PanelButton extends PanelMenu.Button {
         });
         this._versionItem = versionItem;
         this._versionHandlerId = versionItem.connect('activate', () => {
-            GLib.spawn_command_line_async(`xdg-open ${APP_WEBSITE}`);
+            Gio.AppInfo.launch_default_for_uri(APP_WEBSITE, null);
         });
         this.menu.addMenuItem(versionItem);
     }
